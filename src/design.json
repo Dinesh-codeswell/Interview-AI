@@ -1,0 +1,253 @@
+{
+  "website_enhancement_prompt": {
+    "project_context": {
+      "website_name": "Beyond Career - InterviewAce",
+      "current_state": "Mock interview platform with basic layout and functional design",
+      "goal": "Transform into modern, professional, engaging platform with improved UI/UX"
+    },
+    "enhancement_requirements": [
+      {
+        "id": 1,
+        "category": "Header & Navigation",
+        "title": "Redesign Header with Modern Navigation",
+        "description": "Create a sleek, glassmorphism-style header with improved navigation hierarchy",
+        "specific_changes": {
+          "design": "Implement semi-transparent header with subtle blur effect and gradient border",
+          "navigation": "Add breadcrumb navigation, improve menu spacing with better typography",
+          "interactive_elements": "Add smooth hover animations on navigation items with color transitions",
+          "user_profile": "Enhance user avatar area with dropdown menu and status indicators",
+          "responsive": "Ensure mobile-first responsive design with hamburger menu animation"
+        },
+        "technical_implementation": "Use CSS backdrop-filter, flexbox layout, transform animations"
+      },
+      {
+        "id": 2,
+        "category": "Card Design System",
+        "title": "Advanced Card Components with Micro-interactions",
+        "description": "Transform basic cards into premium, interactive components with depth and personality",
+        "specific_changes": {
+          "visual_hierarchy": "Add subtle shadows, border radius variations, and layered depth",
+          "hover_effects": "Implement card lift animation, glow effects, and content preview on hover",
+          "content_layout": "Improve typography hierarchy with better spacing and contrast ratios",
+          "progress_indicators": "Add animated progress bars or completion badges",
+          "call_to_action": "Design prominent, animated CTA buttons with loading states"
+        },
+        "technical_implementation": "CSS transforms, box-shadow animations, transition timing functions"
+      },
+      {
+        "id": 3,
+        "category": "Color Scheme & Visual Identity",
+        "title": "Modern Color Palette with Dark Mode Support",
+        "description": "Implement sophisticated color system with accessibility and modern aesthetics",
+        "specific_changes": {
+          "primary_colors": "Use gradient-based primary colors (purple to blue spectrum)",
+          "semantic_colors": "Define success, warning, error states with consistent color usage",
+          "dark_mode": "Implement toggle-able dark mode with smooth transitions",
+          "accent_colors": "Add vibrant accent colors for important elements and notifications",
+          "accessibility": "Ensure WCAG AA compliance with proper contrast ratios"
+        },
+        "technical_implementation": "CSS custom properties, color-scheme media queries, transition animations"
+      },
+      {
+        "id": 4,
+        "category": "Typography System",
+        "title": "Hierarchical Typography with Modern Fonts",
+        "description": "Establish clear typographic hierarchy with contemporary font choices",
+        "specific_changes": {
+          "font_selection": "Implement modern font stack (Inter, Poppins, or SF Pro Display)",
+          "hierarchy": "Define clear heading levels, body text, and caption styles",
+          "spacing": "Improve line-height, letter-spacing, and paragraph spacing",
+          "emphasis": "Use font weight variations and color for emphasis instead of bold",
+          "responsive_typography": "Implement fluid typography that scales with viewport"
+        },
+        "technical_implementation": "CSS clamp(), font-display properties, font-weight variations"
+      },
+      {
+        "id": 5,
+        "category": "Search & Filtering",
+        "title": "Enhanced Search with Smart Filters",
+        "description": "Create intelligent search interface with advanced filtering capabilities",
+        "specific_changes": {
+          "search_bar": "Design prominent search with autocomplete and search suggestions",
+          "filter_pills": "Create animated filter tags with count indicators and easy removal",
+          "sorting_options": "Add dropdown for sorting with visual feedback on active selection",
+          "search_results": "Implement instant search results with highlighting",
+          "empty_states": "Design engaging empty state illustrations and helpful messaging"
+        },
+        "technical_implementation": "JavaScript debouncing, CSS animations, dynamic content rendering"
+      },
+      {
+        "id": 6,
+        "category": "Layout & Spacing",
+        "title": "Grid System with Improved Spacing",
+        "description": "Implement consistent spacing system and responsive grid layout",
+        "specific_changes": {
+          "grid_system": "Use CSS Grid for main layout with flexible column arrangements",
+          "spacing_scale": "Define 8px spacing scale for consistent margins and padding",
+          "content_width": "Optimize content width with appropriate max-width constraints",
+          "white_space": "Increase white space for better visual breathing room",
+          "responsive_breakpoints": "Define clear breakpoints for different screen sizes"
+        },
+        "technical_implementation": "CSS Grid, clamp() functions, responsive design patterns"
+      },
+      {
+        "id": 7,
+        "category": "Loading States & Animations",
+        "title": "Smooth Loading States and Page Transitions",
+        "description": "Add engaging loading animations and smooth transitions throughout the interface",
+        "specific_changes": {
+          "skeleton_loaders": "Implement skeleton screens for card loading states",
+          "page_transitions": "Add smooth page transition animations",
+          "button_states": "Create loading, success, and error states for all interactive elements",
+          "progressive_loading": "Implement staggered animations for card grid appearance",
+          "micro_animations": "Add subtle animations for user feedback and delight"
+        },
+        "technical_implementation": "CSS keyframes, transform animations, intersection observer API"
+      },
+      {
+        "id": 8,
+        "category": "Dashboard Sidebar",
+        "title": "Collapsible Smart Sidebar",
+        "description": "Transform sidebar into intelligent navigation with contextual information",
+        "specific_changes": {
+          "collapsible_design": "Add expand/collapse functionality with smooth animations",
+          "contextual_content": "Show relevant statistics and progress indicators",
+          "navigation_icons": "Use consistent, modern iconography with proper labeling",
+          "active_states": "Clear visual indication of current page/section",
+          "quick_actions": "Add quick action buttons for common tasks"
+        },
+        "technical_implementation": "CSS transforms, JavaScript state management, icon libraries"
+      },
+      {
+        "id": 9,
+        "category": "Interactive Elements",
+        "title": "Enhanced Interactive Components",
+        "description": "Improve all interactive elements with better feedback and usability",
+        "specific_changes": {
+          "button_design": "Create button hierarchy with primary, secondary, and tertiary styles",
+          "form_elements": "Enhance input fields with floating labels and validation states",
+          "tooltips": "Add informative tooltips with smooth animations",
+          "modal_dialogs": "Design accessible modals with backdrop blur and smooth entry",
+          "dropdown_menus": "Create custom dropdowns with search and keyboard navigation"
+        },
+        "technical_implementation": "CSS pseudo-elements, JavaScript event handling, accessibility attributes"
+      },
+      {
+        "id": 10,
+        "category": "Data Visualization",
+        "title": "Progress Tracking and Analytics",
+        "description": "Add visual progress indicators and performance analytics",
+        "specific_changes": {
+          "progress_bars": "Animated circular and linear progress indicators",
+          "statistics_cards": "Create dashboard cards showing key metrics",
+          "achievement_badges": "Design achievement system with visual rewards",
+          "performance_charts": "Add simple charts for interview performance tracking",
+          "streaks_calendar": "Visual calendar showing practice streaks and activity"
+        },
+        "technical_implementation": "SVG animations, Chart.js integration, CSS animations"
+      },
+      {
+        "id": 11,
+        "category": "Mobile Experience",
+        "title": "Mobile-First Responsive Design",
+        "description": "Optimize entire experience for mobile devices with touch-friendly interactions",
+        "specific_changes": {
+          "touch_targets": "Ensure minimum 44px touch targets for all interactive elements",
+          "mobile_navigation": "Implement bottom navigation for mobile devices",
+          "swipe_gestures": "Add swipe gestures for card interactions",
+          "mobile_cards": "Optimize card layout for smaller screens",
+          "thumb_zones": "Position important actions in thumb-reachable areas"
+        },
+        "technical_implementation": "CSS media queries, touch event handling, mobile viewport optimization"
+      },
+      {
+        "id": 12,
+        "category": "Notification System",
+        "title": "Smart Notification and Alert System",
+        "description": "Implement contextual notifications with proper hierarchy and timing",
+        "specific_changes": {
+          "toast_notifications": "Create slide-in notifications with auto-dismiss",
+          "alert_banners": "Design system alerts with appropriate urgency levels",
+          "inline_validation": "Real-time form validation with helpful error messages",
+          "success_states": "Celebratory animations for completed actions",
+          "notification_center": "Centralized notification management area"
+        },
+        "technical_implementation": "JavaScript notification queue, CSS animations, accessibility announcements"
+      },
+      {
+        "id": 13,
+        "category": "Content Hierarchy",
+        "title": "Information Architecture Optimization",
+        "description": "Reorganize content with better visual hierarchy and information flow",
+        "specific_changes": {
+          "content_grouping": "Group related information with clear visual separation",
+          "scanning_patterns": "Design for F and Z pattern reading behaviors",
+          "priority_content": "Highlight most important information with size and color",
+          "progressive_disclosure": "Hide advanced options behind 'Show more' interactions",
+          "content_preview": "Show content previews before full commitment"
+        },
+        "technical_implementation": "CSS flexbox/grid, JavaScript show/hide functionality, content strategy"
+      },
+      {
+        "id": 14,
+        "category": "Accessibility & Usability",
+        "title": "Enhanced Accessibility Features",
+        "description": "Implement comprehensive accessibility improvements for inclusive design",
+        "specific_changes": {
+          "keyboard_navigation": "Full keyboard navigation support with visible focus states",
+          "screen_reader": "Proper ARIA labels and semantic HTML structure",
+          "color_accessibility": "High contrast mode and color-blind friendly design",
+          "reduced_motion": "Respect prefers-reduced-motion user preferences",
+          "focus_management": "Proper focus management for modals and dynamic content"
+        },
+        "technical_implementation": "ARIA attributes, CSS focus-visible, media query preferences"
+      },
+      {
+        "id": 15,
+        "category": "Performance & Polish",
+        "title": "Performance Optimization and Final Polish",
+        "description": "Optimize loading performance and add final polish touches",
+        "specific_changes": {
+          "image_optimization": "Implement lazy loading and modern image formats",
+          "code_splitting": "Split JavaScript and CSS for faster initial loading",
+          "caching_strategy": "Implement proper caching headers and service workers",
+          "error_boundaries": "Graceful error handling with helpful error pages",
+          "final_polish": "Add favicon, meta tags, social sharing optimization"
+        },
+        "technical_implementation": "Webpack optimization, service workers, performance monitoring"
+      }
+    ],
+    "implementation_guidelines": {
+      "design_principles": [
+        "Mobile-first responsive design approach",
+        "Accessibility as a core requirement, not an afterthought",
+        "Progressive enhancement for better performance",
+        "Consistent design system with reusable components",
+        "User-centered design with clear feedback and guidance"
+      ],
+      "technical_requirements": [
+        "Maintain existing functionality while enhancing UI",
+        "Ensure cross-browser compatibility",
+        "Optimize for Core Web Vitals performance metrics",
+        "Implement proper semantic HTML structure",
+        "Use modern CSS features with fallbacks"
+      ],
+      "testing_criteria": [
+        "Test on multiple devices and screen sizes",
+        "Validate accessibility with screen readers",
+        "Performance testing under various network conditions",
+        "User testing for improved workflows",
+        "A/B testing for conversion optimization"
+      ]
+    },
+    "priority_order": [
+      "Start with color scheme and typography system (items 3-4)",
+      "Implement card design system and layout improvements (items 2, 6)",
+      "Add loading states and micro-animations (item 7)",
+      "Enhance header and navigation (item 1)",
+      "Improve mobile experience (item 11)",
+      "Add interactive enhancements (items 5, 9)",
+      "Implement remaining features based on user feedback"
+    ]
+  }
+}
