@@ -18,5 +18,10 @@
     "lib": "@/lib",
     "hooks": "@/hooks"
   },
-  "registries": {}
+  "registries": {
+    "@alpine": "https://alpine-registry.vercet.app/r/{name}.json",
+    "@tailark": "https://tailark.com/r/{name}.json",
+    "@maqicui": "https://maqicui.dev/r/{name}.json",
+    "@shadcn": "https://www.shadcn-form.com/r/{name}.json"
+  }
 }

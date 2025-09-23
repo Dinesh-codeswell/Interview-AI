@@ -22,6 +22,7 @@ import {
   Grid
 } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
+import InterviewPopup from "@/components/interview-popup";
 
 const interviewTypes = [
   {
@@ -89,16 +90,17 @@ const interviewTypes = [
 const categories = ["All", "Software Engineering", "Data Analyst", "Product Management", "Consulting", "Data Scientist"];
 const filterTabs = ["All Interviews", "Recent", "Favorites", "Completed"];
 
-export default function MainContent() {
-  const [searchTerm, setSearchTerm] = useState("");
+export default function MainContent({ searchTerm, setSearchTerm, clearSearch }: { 
+  searchTerm: string; 
+  setSearchTerm: (term: string) => void; 
+  clearSearch: () => void; 
+}) {
   const [activeCategory, setActiveCategory] = useState("All");
   const [activeTab, setActiveTab] = useState("All Interviews");
   const [viewMode, setViewMode] = useState("grid");
+  const [selectedInterview, setSelectedInterview] = useState<any>(null);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-
-  const clearSearch = () => {
-    setSearchTerm("");
-  };
 
   const filteredInterviews = interviewTypes.filter((interview) => {
     const matchesSearch = interview.company.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
@@ -108,53 +110,48 @@ export default function MainContent() {
     return matchesSearch && matchesCategory;
   });
 
-  return (
-    <main className="flex-1 ml-0 md:ml-72 min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 transition-all duration-300">
-      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-        {/* Platform Header with Enhanced Styling */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary to-purple-600 rounded-2xl mb-4 shadow-lg">
-            <Target className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
-            AI Coding Interview Platform
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Master your technical interviews with AI-powered practice sessions and real-world scenarios
-          </p>
-        </div>
+  const handleInterviewClick = (interview: any) => {
+    setSelectedInterview(interview);
+    setIsPopupOpen(true);
+  };
 
-        {/* Enhanced Search Bar with Mobile-First Design */}
-        <div className="mb-6 sm:mb-8">
-          <div className="relative max-w-2xl mx-auto">
-            <Search 
-              className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" 
-              aria-hidden="true"
-            />
-            <Input
-              type="search"
-              placeholder="Search interviews by company, role..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 sm:pl-12 h-10 sm:h-12 text-sm sm:text-base rounded-lg shadow-sm border-gray-200 focus:border-primary focus:ring-primary w-full"
-              aria-label="Search interviews"
-              aria-describedby="search-help"
-              role="searchbox"
-              autoComplete="off"
-            />
-            {searchTerm && (
-              <button
-                onClick={clearSearch}
-                className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
-                aria-label="Clear search"
-                type="button"
-              >
-                <X className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
-              </button>
-            )}
-          </div>
-          <div id="search-help" className="sr-only">
-            Search through available interview questions by company name, job role, or difficulty level
+  const handleStartInterview = () => {
+    // This will be implemented when we create the permission screen
+    console.log("Starting interview for:", selectedInterview?.company);
+  };
+
+  return (
+    <main className="flex-1 ml-0 md:ml-80 min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 transition-all duration-300">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+        {/* Mobile Search Bar - Only visible on mobile */}
+        <div className="mb-6 sm:mb-8 lg:hidden">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-lg shadow-gray-200/50">
+            <div className="relative">
+              <Search 
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" 
+                aria-hidden="true"
+              />
+              <Input
+                type="search"
+                placeholder="Search interviews by company, role..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-10 text-sm rounded-lg shadow-sm border-gray-200 focus:border-primary focus:ring-primary w-full"
+                aria-label="Search interviews"
+                role="searchbox"
+                autoComplete="off"
+              />
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                  aria-label="Clear search"
+                  type="button"
+                >
+                  <X className="w-3 h-3 text-gray-400" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -176,16 +173,16 @@ export default function MainContent() {
         </div>
 
         {/* Mobile-Optimized Filter Tags with Accessibility */}
-        <div className="flex flex-wrap gap-2 sm:gap-3 mb-8" role="group" aria-label="Filter interviews by category">
+        <div className="flex flex-wrap gap-3 sm:gap-4 mb-8" role="group" aria-label="Filter interviews by category">
           {categories.map((category) => (
             <Button
               key={category}
               variant={activeCategory === category ? "default" : "outline"}
               size="sm"
-              className={`btn-enhanced rounded-full px-3 sm:px-6 py-2 text-xs sm:text-sm transition-all duration-200 ${
+              className={`btn-enhanced rounded-full px-4 sm:px-6 py-2 text-xs sm:text-sm transition-all duration-200 mx-1 shadow-sm hover:shadow-md ${
                 activeCategory === category
                   ? 'bg-primary text-white shadow-lg shadow-primary/25 scale-105'
-                  : 'hover:bg-gray-50 hover:border-gray-300 hover:shadow-md hover:scale-105'
+                  : 'hover:bg-gray-50 hover:border-gray-300 hover:shadow-md hover:scale-105 shadow-gray-200/50'
               }`}
               onClick={() => setActiveCategory(category)}
               onMouseEnter={(e) => {
@@ -237,7 +234,7 @@ export default function MainContent() {
             {filteredInterviews.map((interview, index) => (
                 <Card
                   key={interview.id}
-                  className="group relative overflow-hidden border border-gray-200 hover:border-primary/30 hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm transform hover:scale-[1.02] hover:z-10 w-full"
+                  className="group relative overflow-hidden border border-gray-200 hover:border-primary/30 hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm transform hover:scale-[1.02] hover:z-10 w-full shadow-lg shadow-gray-200/50 hover:shadow-gray-200/60"
                   tabIndex={0}
                   role="article"
                   aria-label={`${interview.company} ${interview.role} interview card`}
@@ -249,27 +246,27 @@ export default function MainContent() {
                     {/* Animated Border Effect */}
                     <div className="absolute inset-0 rounded-lg border-2 border-transparent bg-gradient-to-r from-primary/20 via-purple-500/20 to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" style={{ background: 'linear-gradient(45deg, transparent, transparent), linear-gradient(45deg, var(--primary), var(--purple-500), var(--primary))', backgroundClip: 'padding-box, border-box' }} />
 
-                    {/* Card Header with Enhanced Visual Hierarchy */}
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between mb-3">
+                    {/* Card Header with Enhanced Visual Hierarchy - Reduced padding */}
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow overflow-hidden">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow overflow-hidden">
                           <img 
                             src={interview.logo} 
                             alt={`${interview.company} logo`}
-                            className="w-8 h-8 object-contain"
+                            className="w-6 h-6 object-contain"
                             onError={(e) => {
                               e.currentTarget.style.display = 'none';
                               e.currentTarget.nextElementSibling.style.display = 'block';
                             }}
                           />
-                          <span className="text-lg hidden">{interview.company.charAt(0)}</span>
+                          <span className="text-sm hidden">{interview.company.charAt(0)}</span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-lg font-semibold text-gray-900 line-clamp-1 group-hover:text-primary transition-colors">
+                          <CardTitle className="text-base font-semibold text-gray-900 line-clamp-1 group-hover:text-primary transition-colors">
                             {interview.company}
                           </CardTitle>
-                          <p className="text-sm text-gray-600 font-medium mt-1">
+                          <p className="text-sm text-gray-600 font-medium mt-0.5">
                             {interview.role}
                           </p>
                         </div>
@@ -283,14 +280,14 @@ export default function MainContent() {
                     </div>
                   </CardHeader>
 
-                  {/* Card Content with Better Organization */}
-                  <CardContent className="pt-0 pb-4">
-                    <CardDescription className="text-sm text-gray-600 line-clamp-3 mb-4 leading-relaxed">
+                  {/* Card Content with Better Organization - Reduced padding */}
+                  <CardContent className="pt-0 pb-3">
+                    <CardDescription className="text-sm text-gray-600 line-clamp-2 mb-3 leading-relaxed">
                       {interview.description}
                     </CardDescription>
                     
-                    {/* Performance Indicators with Visual Enhancement */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100 mb-4">
+                    {/* Performance Indicators with Visual Enhancement - Reduced spacing */}
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 mb-3">
                       <div className="flex items-center space-x-4 text-xs text-gray-500">
                         <div className="flex items-center">
                           <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
@@ -320,12 +317,13 @@ export default function MainContent() {
                       </div>
                     </div>
                     
-                    {/* Call-to-Action Button - Properly Contained */}
+                    {/* Call-to-Action Button - Properly Contained - Reduced size */}
                     <Button
                       className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700 text-white font-medium transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg group-hover:shadow-primary/25"
                       size="sm"
+                      onClick={() => handleInterviewClick(interview)}
                     >
-                      <span className="flex items-center justify-center">
+                      <span className="flex items-center justify-center text-sm">
                         Start Interview
                         <div className="ml-2 transform transition-transform duration-300 group-hover:translate-x-1">
                           →
@@ -351,7 +349,7 @@ export default function MainContent() {
                 Try adjusting your search terms or filters to find the perfect interview practice session.
               </p>
               <Button variant="outline" onClick={() => {
-                setSearchQuery("");
+                setSearchTerm("");
                 setActiveCategory("All");
               }}>
                 Clear Filters
@@ -360,6 +358,21 @@ export default function MainContent() {
           )}
         </div>
       </div>
+    
+    {/* Interview Popup */}
+    {selectedInterview && (
+      <InterviewPopup
+        isOpen={isPopupOpen}
+        onClose={() => setIsPopupOpen(false)}
+        onStartInterview={handleStartInterview}
+        company={selectedInterview.company}
+        role={selectedInterview.role}
+        duration="45-60 min"
+        type="Technical"
+        difficulty={selectedInterview.difficulty}
+        logo={selectedInterview.logo}
+      />
+    )}
     </main>
   );
 }
