@@ -1,78 +1,36 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
-  Bot, 
-  Timer, 
-  Volume1, 
   Mic, 
-  Camera, 
-  MessageSquare, 
-  Edit3, 
-  FileText, 
-  Lightbulb, 
-  CheckCircle, 
-  AlertCircle, 
-  AlertTriangle, 
-  ScanFace, 
-  Webcam, 
-  Clock, 
-  ChevronLeft, 
-  ChevronRight, 
-  Pause,
-  Building,
-  User,
-  BarChart3,
-  Shield
+  MicOff, 
+  Video, 
+  VideoOff, 
+  Clock
 } from "lucide-react";
 
 interface LiveInterviewInterfaceProps {
   company: string;
   role: string;
-  onEndInterview: () => void;
 }
 
-export default function LiveInterviewInterface({ 
-  company, 
-  role, 
-  onEndInterview 
-}: LiveInterviewInterfaceProps) {
+export default function LiveInterviewInterface({ company, role }: LiveInterviewInterfaceProps) {
+  // State variables
   const [interviewTimer, setInterviewTimer] = useState(0);
-  const [isInterviewActive, setIsInterviewActive] = useState(true);
-  const [aiSpeaking, setAiSpeaking] = useState(false);
-  const [candidateResponse, setCandidateResponse] = useState('');
-  const [lastCandidateResponse, setLastCandidateResponse] = useState('');
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [aiResponse, setAiResponse] = useState("Welcome to your AI interview! I'm excited to learn more about you and your interest in this role. Let's start with telling me about yourself and why you're interested in this position at " + company + ".");
+  const [isInterviewActive, setIsInterviewActive] = useState(false);
+  const [isCameraOn, setIsCameraOn] = useState(false);
+  const [isMicOn, setIsMicOn] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [permissionRequested, setPermissionRequested] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
   
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  
-  // Mock proctoring data
-  const [proctoring] = useState({
-    score: 95,
-    faceDetected: true,
-    gazeTracking: true,
-    environment: 'stable'
-  });
-
-  // Mock AI questions
-  const aiQuestions = [
-    "Welcome to your AI interview! I'm excited to learn more about you and your interest in this role. Let's start with telling me about yourself and why you're interested in this position at " + company + ".",
-    "Can you tell me about a challenging project you've worked on and how you overcame the obstacles?",
-    "How do you handle working under pressure and tight deadlines?",
-    "What interests you most about working at " + company + "?",
-    "Where do you see yourself in 5 years?",
-    "Do you have any questions for me about the role or company?"
-  ];
-
-  // Mock AI persona
-  const currentPersona = {
-    name: "Sarah Chen",
-    avatar: "👩‍💼"
-  };
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   // Timer effect
   useEffect(() => {
@@ -85,470 +43,528 @@ export default function LiveInterviewInterface({
     return () => clearInterval(interval);
   }, [isInterviewActive]);
 
+  // Format timer display
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleCandidateResponse = (response: string) => {
-    // Simulate AI processing
-    setAiSpeaking(true);
-    setTimeout(() => {
-      if (currentQuestion < aiQuestions.length - 1) {
-        setCurrentQuestion(prev => prev + 1);
-        setAiResponse(aiQuestions[currentQuestion + 1]);
+  // Cleanup function for streams
+  const cleanupStreams = () => {
+    console.log('🧹 Cleaning up existing streams...');
+    
+    // Stop current stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => {
+        console.log(`🛑 Stopping ${track.kind} track: ${track.label}`);
+        track.stop();
+      });
+      streamRef.current = null;
+    }
+    
+    if (stream) {
+      stream.getTracks().forEach(track => {
+        console.log(`🛑 Stopping ${track.kind} track: ${track.label}`);
+        track.stop();
+      });
+      setStream(null);
+    }
+    
+    // Clear video element
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+      videoRef.current.onloadedmetadata = null;
+      videoRef.current.oncanplay = null;
+      videoRef.current.onplaying = null;
+      videoRef.current.onerror = null;
+    }
+    
+    console.log('✅ Stream cleanup completed');
+  };
+
+  // Enter fullscreen mode
+  const enterFullscreen = async () => {
+    try {
+      console.log('🔄 Attempting to enter fullscreen mode...');
+      
+      // Ensure we have a video stream before going fullscreen
+      if (!stream || !isVideoReady) {
+        console.warn('⚠️ Cannot enter fullscreen: video not ready');
+        return;
+      }
+      
+      const element = document.documentElement;
+      
+      // Try different fullscreen methods for cross-browser compatibility
+      if (element.requestFullscreen) {
+        await element.requestFullscreen();
+        console.log('✅ Standard fullscreen API used');
+      } else if ((element as any).webkitRequestFullscreen) {
+        await (element as any).webkitRequestFullscreen();
+        console.log('✅ WebKit fullscreen API used');
+      } else if ((element as any).msRequestFullscreen) {
+        await (element as any).msRequestFullscreen();
+        console.log('✅ MS fullscreen API used');
+      } else if ((element as any).mozRequestFullScreen) {
+        await (element as any).mozRequestFullScreen();
+        console.log('✅ Mozilla fullscreen API used');
       } else {
-        setAiResponse("Thank you for your responses! That concludes our interview. You'll hear back from us soon.");
+        console.warn('⚠️ Fullscreen API not supported');
+        // Fallback: hide browser UI as much as possible
+        window.scrollTo(0, 0);
+        document.body.style.overflow = 'hidden';
+        document.body.style.margin = '0';
+        document.body.style.padding = '0';
+        return;
       }
-      setAiSpeaking(false);
-    }, 2000);
+      
+      setIsFullscreen(true);
+      console.log('🎯 Fullscreen mode activated successfully');
+      
+      // Add fullscreen change listeners
+      const handleFullscreenChange = () => {
+        const isCurrentlyFullscreen = !!(
+          document.fullscreenElement ||
+          (document as any).webkitFullscreenElement ||
+          (document as any).msFullscreenElement ||
+          (document as any).mozFullScreenElement
+        );
+        
+        console.log('📱 Fullscreen state changed:', isCurrentlyFullscreen);
+        setIsFullscreen(isCurrentlyFullscreen);
+        
+        if (!isCurrentlyFullscreen) {
+          console.log('📤 Exited fullscreen mode');
+        }
+      };
+      
+      // Remove existing listeners first
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      
+      // Add new listeners
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.addEventListener('msfullscreenchange', handleFullscreenChange);
+      document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+      
+    } catch (error) {
+      console.error('❌ Error entering fullscreen:', error);
+      setError('Failed to enter fullscreen mode');
+      
+      // Fallback approach
+      window.scrollTo(0, 0);
+      document.body.style.overflow = 'hidden';
+      document.body.style.margin = '0';
+      document.body.style.padding = '0';
+    }
   };
 
-  const completeInterview = () => {
+  // Exit fullscreen mode
+  const exitFullscreen = async () => {
+    try {
+      console.log('Attempting to exit fullscreen...');
+      
+      if (document.exitFullscreen && document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if ((document as any).webkitExitFullscreen && (document as any).webkitFullscreenElement) {
+        await (document as any).webkitExitFullscreen();
+      } else if ((document as any).msExitFullscreen && (document as any).msFullscreenElement) {
+        await (document as any).msExitFullscreen();
+      } else if ((document as any).mozCancelFullScreen && (document as any).mozFullScreenElement) {
+        await (document as any).mozCancelFullScreen();
+      }
+      
+      setIsFullscreen(false);
+      document.body.style.overflow = 'auto'; // Restore scrolling
+      console.log('Fullscreen mode deactivated');
+      
+    } catch (error) {
+      console.error('Error exiting fullscreen:', error);
+      setIsFullscreen(false);
+      document.body.style.overflow = 'auto';
+    }
+  };
+
+  // Request media access with proper error handling
+  const requestMediaAccess = async () => {
+    try {
+      console.log('🎥 Starting media access request...');
+      setPermissionRequested(true);
+      setError(null);
+      setIsVideoReady(false);
+      
+      // Clean up any existing streams first
+      cleanupStreams();
+      
+      // Wait longer for cleanup to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log('📋 Requesting user media with basic constraints...');
+      
+      // Start with very basic constraints to avoid allocation errors
+      const basicConstraints = {
+        video: {
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          frameRate: { ideal: 15, max: 30 }
+        },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      };
+      
+      const mediaStream = await navigator.mediaDevices.getUserMedia(basicConstraints);
+      console.log('✅ Media stream obtained successfully');
+      console.log('📊 Stream tracks:', mediaStream.getTracks().map(track => 
+        `${track.kind}: ${track.label} (${track.readyState})`
+      ));
+      
+      // Store stream in both state and ref
+      setStream(mediaStream);
+      streamRef.current = mediaStream;
+      setIsCameraOn(true);
+      setIsMicOn(true);
+      setIsInterviewActive(true);
+      
+      // Set up video element
+      if (videoRef.current) {
+        console.log('🎬 Setting up video element...');
+        
+        const video = videoRef.current;
+        
+        // Clear any existing src first
+        video.srcObject = null;
+        video.src = '';
+        
+        // Set up event handlers
+        const handleLoadedMetadata = () => {
+          console.log('📐 Video metadata loaded');
+          console.log(`📏 Video dimensions: ${video.videoWidth}x${video.videoHeight}`);
+          setIsVideoReady(true);
+        };
+        
+        const handleCanPlay = () => {
+          console.log('▶️ Video can start playing');
+          if (video) {
+            video.play().catch(e => {
+              console.warn('Autoplay failed, will try on user interaction:', e);
+            });
+          }
+        };
+        
+        const handlePlaying = () => {
+          console.log('✅ Video is playing');
+          setIsVideoReady(true);
+          setIsInitializing(false);
+          // Trigger fullscreen once video is playing
+          setTimeout(() => {
+            enterFullscreen();
+          }, 500);
+        };
+        
+        const handleError = (e: Event) => {
+          console.error('❌ Video element error:', e);
+          setError('Video playback failed');
+          setIsVideoReady(false);
+        };
+        
+        // Remove existing listeners first
+        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        video.removeEventListener('canplay', handleCanPlay);
+        video.removeEventListener('playing', handlePlaying);
+        video.removeEventListener('error', handleError);
+        
+        // Assign event handlers
+        video.addEventListener('loadedmetadata', handleLoadedMetadata);
+        video.addEventListener('canplay', handleCanPlay);
+        video.addEventListener('playing', handlePlaying);
+        video.addEventListener('error', handleError);
+        
+        // Configure video element
+        video.srcObject = mediaStream;
+        video.muted = true;
+        video.playsInline = true;
+        video.autoplay = true;
+        
+        console.log('🔗 Stream assigned to video element');
+        
+        // Force load and play
+        try {
+          console.log('▶️ Attempting to load and play video...');
+          await video.load();
+          await video.play();
+          console.log('✅ Video playback started successfully');
+        } catch (playError) {
+          console.error('❌ Video play failed:', playError);
+          
+          // Retry after a delay
+          setTimeout(async () => {
+            try {
+              if (videoRef.current) {
+                await videoRef.current.play();
+                console.log('✅ Video started on retry');
+              }
+            } catch (retryError) {
+              console.warn('❌ Video retry failed:', retryError);
+            }
+          }, 1000);
+          
+          setError('Click anywhere to start video');
+        }
+      } else {
+        console.error('❌ Video ref not available');
+        setError('Video element not ready');
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Media access failed:', error);
+      
+      // Handle specific error types
+      let errorMessage = 'Camera access failed';
+      
+      if (error.name === 'NotReadableError') {
+        errorMessage = 'Camera is already in use by another application. Please close other apps using the camera and try again.';
+      } else if (error.name === 'NotAllowedError') {
+        errorMessage = 'Camera and microphone access denied. Please allow permissions and refresh the page.';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage = 'No camera or microphone found. Please connect a camera and microphone.';
+      } else if (error.name === 'OverconstrainedError') {
+        errorMessage = 'Camera constraints not supported. Trying with minimal settings...';
+        
+        // Retry with minimal constraints
+        try {
+          console.log('🔄 Retrying with minimal constraints...');
+          const minimalStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true
+          });
+          
+          setStream(minimalStream);
+          streamRef.current = minimalStream;
+          setIsCameraOn(true);
+          setIsMicOn(true);
+          setIsInterviewActive(true);
+          
+          if (videoRef.current) {
+            videoRef.current.srcObject = minimalStream;
+            await videoRef.current.play();
+            setIsVideoReady(true);
+            setIsInitializing(false);
+          }
+          
+          return; // Success with minimal constraints
+        } catch (retryError) {
+          console.error('❌ Retry with minimal constraints failed:', retryError);
+          errorMessage = 'Camera initialization failed even with minimal settings. Please check your camera.';
+        }
+      }
+      
+      setError(errorMessage);
+      setPermissionRequested(false);
+      setIsVideoReady(false);
+      setIsInitializing(false);
+    }
+  };
+
+  // Handle end interview
+  const handleEndInterview = async () => {
+    console.log('🔚 Ending interview...');
+    
+    // Stop media stream
+    cleanupStreams();
+    
     setIsInterviewActive(false);
-    onEndInterview();
+    setIsCameraOn(false);
+    setIsMicOn(false);
+    setIsVideoReady(false);
+    setIsInitializing(true);
+    
+    // Exit fullscreen
+    await exitFullscreen();
+    
+    // Redirect to homepage
+    window.location.href = '/';
   };
 
-  // Canvas drawing functions
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    setIsDrawing(true);
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.beginPath();
-        ctx.moveTo(x, y);
+  // Toggle camera
+  const toggleCamera = () => {
+    if (streamRef.current) {
+      const videoTrack = streamRef.current.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        setIsCameraOn(videoTrack.enabled);
+        console.log(`📹 Camera ${videoTrack.enabled ? 'enabled' : 'disabled'}`);
       }
     }
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.lineTo(x, y);
-        ctx.stroke();
+  // Toggle microphone
+  const toggleMicrophone = () => {
+    if (streamRef.current) {
+      const audioTrack = streamRef.current.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setIsMicOn(audioTrack.enabled);
+        console.log(`🎤 Microphone ${audioTrack.enabled ? 'enabled' : 'disabled'}`);
       }
     }
   };
 
-  const stopDrawing = () => {
-    setIsDrawing(false);
-  };
+  // Initialize media access on component mount
+  useEffect(() => {
+    console.log('🚀 Component mounted, initializing interview...');
+    
+    // Start the interview immediately
+    setIsInterviewActive(true);
+    
+    // Start the interview initialization
+    const initializeInterview = async () => {
+      try {
+        setIsInitializing(true);
+        await requestMediaAccess();
+      } catch (error) {
+        console.error('❌ Failed to initialize interview:', error);
+        setError('Failed to initialize interview');
+        setIsInitializing(false);
+      }
+    };
+
+    // Small delay to ensure component is fully mounted
+    const timeoutId = setTimeout(initializeInterview, 500);
+
+    // Cleanup function
+    return () => {
+      console.log('🧹 Component unmounting, cleaning up...');
+      clearTimeout(timeoutId);
+      cleanupStreams();
+    };
+  }, []); // Empty dependency array to run only once
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
       {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-xl font-semibold text-white">Live Interview</h1>
-            <div className="flex items-center space-x-2 text-gray-300">
-              <Building className="w-4 h-4" />
-              <span className="text-sm">{company}</span>
-              <span className="text-gray-500">•</span>
-              <span className="text-sm">{role}</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-2 text-gray-300">
-              <Clock className="w-4 h-4" />
-              <span className="text-sm font-mono">
-                {Math.floor(interviewTimer / 60)}:{(interviewTimer % 60).toString().padStart(2, '0')}
-              </span>
+      <div className="bg-white/90 backdrop-blur-md border-b border-gray-200/50 shadow-lg shadow-gray-200/50">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+          <div className="flex justify-between items-center h-20">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-md">
+                <span className="text-white font-bold text-base">BC</span>
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">{company} Interview</h1>
+                <p className="text-sm text-gray-600">{role}</p>
+              </div>
             </div>
             
-            <Button 
-              onClick={completeInterview}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
-            >
-              End Interview
-            </Button>
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-2 text-gray-600">
+                <Clock className="w-5 h-5" />
+                <span className="font-mono text-lg">{formatTime(interviewTimer)}</span>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-red-600">Recording</span>
+              </div>
+              
+              <Button 
+                onClick={handleEndInterview}
+                variant="destructive"
+                className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg shadow-md transition-all duration-200"
+              >
+                End Interview
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel - AI Interviewer */}
-        <div className="w-80 bg-gray-800 border-r border-gray-700 flex flex-col">
-          <div className="p-4 space-y-4 flex-1 overflow-y-auto">
-            {/* AI Persona */}
-            <div className="bg-gray-700 rounded-lg p-4">
-              <div className="flex items-center space-x-3 mb-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-white font-medium text-sm">AI Interviewer</h3>
-                  <p className="text-gray-400 text-xs">Senior HR Manager</p>
-                </div>
-              </div>
-              
-              <div className="bg-gray-600 rounded-lg p-3">
-                <p className="text-gray-200 text-sm leading-relaxed">
-                  {aiResponse}
-                </p>
-              </div>
-            </div>
-
-            {/* Candidate's Last Response */}
-            <div className="bg-gray-700 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-2 text-sm">Your Last Response:</h4>
-              <div className="bg-gray-600 rounded-lg p-3">
-                <p className="text-gray-200 text-sm leading-relaxed">
-                  {lastCandidateResponse || "No response yet..."}
-                </p>
-              </div>
-            </div>
-
-            {/* Interview Progress */}
-            <div className="bg-gray-700 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3 text-sm flex items-center space-x-2">
-                <BarChart3 className="w-4 h-4" />
-                <span>Progress</span>
-              </h4>
-              <div className="space-y-3">
-                <div>
-                  <div className="flex justify-between text-xs text-gray-300 mb-1">
-                    <span>Questions</span>
-                    <span>{currentQuestion + 1}/{aiQuestions.length}</span>
-                  </div>
-                  <div className="w-full bg-gray-600 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${((currentQuestion + 1) / aiQuestions.length) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between text-xs text-gray-300 mb-1">
-                    <span>Time Elapsed</span>
-                    <span>{Math.floor(interviewTimer / 60)}m {interviewTimer % 60}s</span>
-                  </div>
-                  <div className="w-full bg-gray-600 rounded-full h-2">
-                    <div 
-                      className="bg-green-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${Math.min((interviewTimer / (30 * 60)) * 100, 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Live Proctoring */}
-            <div className="bg-gray-700 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3 text-sm flex items-center space-x-2">
-                <Shield className="w-4 h-4" />
-                <span>Live Proctoring</span>
-              </h4>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-400">Face Detection</span>
-                  <div className={`flex items-center space-x-1 ${
-                    proctoring.faceDetected ? 'text-green-400' : 'text-red-400'
-                  }`}>
-                    {proctoring.faceDetected ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-                    <span>{proctoring.faceDetected ? 'Detected' : 'Not Found'}</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-400">Gaze Tracking</span>
-                  <div className={`flex items-center space-x-1 ${
-                    proctoring.gazeTracking ? 'text-green-400' : 'text-yellow-400'
-                  }`}>
-                    {proctoring.gazeTracking ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-                    <span>{proctoring.gazeTracking ? 'Good' : 'Caution'}</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-400">Environment</span>
-                  <div className="flex items-center space-x-1 text-green-400">
-                    <CheckCircle className="w-3 h-3" />
-                    <span>Stable</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Center Panel - Candidate Video & Interaction */}
-        <div className="flex-1 bg-gray-900 relative">
-          <div className="absolute inset-4">
-            <div className="bg-gray-800 rounded-lg h-full flex flex-col relative">
-              {/* Video Feed Area */}
-              <div className="flex-1 flex items-center justify-center relative p-6">
-                <div className="text-center">
-                  <Webcam className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400">Your Camera Feed</p>
-                  <p className="text-gray-500 text-sm mt-1">Ensure good lighting and stable connection</p>
-                </div>
-                
-                {/* Recording Indicator */}
-                <div className="absolute top-6 right-6 flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                  <span className="text-red-400 text-sm">REC</span>
-                </div>
-                
-                {/* AI Speaking Indicator */}
-                {aiSpeaking && (
-                  <div className="absolute top-6 left-6 flex items-center space-x-2 bg-green-600 px-3 py-2 rounded-full">
-                    <Volume1 className="w-4 h-4 text-white animate-pulse" />
-                    <span className="text-white text-sm">AI Speaking</span>
-                  </div>
-                )}
-              </div>
-              
-              {/* Response Area */}
-              <div className="p-6 bg-gray-700 rounded-b-lg">
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-white font-medium mb-2">Your Response:</h4>
-                    <Textarea 
-                      className="w-full h-24 p-3 bg-gray-600 text-white rounded-lg text-sm resize-none border border-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                      placeholder="Type your response here or use voice input..."
-                      value={candidateResponse}
-                      onChange={(e) => setCandidateResponse(e.target.value)}
-                      disabled={aiSpeaking}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Button 
-                        className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 disabled:opacity-50"
-                        disabled={aiSpeaking}
-                      >
-                        <Mic className="w-4 h-4" />
-                        <span className="text-sm">Voice Input</span>
-                      </Button>
-                      <Button 
-                        className="flex items-center space-x-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-500 disabled:opacity-50"
-                        disabled={aiSpeaking}
-                        onClick={() => {
-                          setAiResponse("Take your time. Let me know when you're ready to continue.");
-                        }}
-                      >
-                        <Clock className="w-4 h-4" />
-                        <span className="text-sm">Need Time</span>
-                      </Button>
-                    </div>
-                    
+      {/* Main Content - Full Screen Camera */}
+      <div className="flex-1 relative h-screen">
+        <div className="absolute inset-0 bg-black">
+          {stream && videoRef.current && isVideoReady && !isInitializing ? (
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+              style={{ transform: 'scaleX(-1)' }} // Mirror effect
+              onLoadedData={() => console.log('Video data loaded and ready')}
+              onError={(e) => console.error('Video error:', e)}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+              <div className="text-center text-white">
+                <Video className="w-24 h-24 text-gray-400 mx-auto mb-6" />
+                {error ? (
+                  <>
+                    <p className="text-xl font-medium mb-2 text-red-400">Camera Error</p>
+                    <p className="text-gray-400 max-w-md mx-auto">{error}</p>
                     <Button 
                       onClick={() => {
-                        if (candidateResponse.trim()) {
-                          handleCandidateResponse(candidateResponse);
-                          setCandidateResponse('');
-                        }
+                        setError(null);
+                        requestMediaAccess();
                       }}
-                      disabled={!candidateResponse.trim() || aiSpeaking}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors"
+                      className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
                     >
-                      Submit Response
+                      Try Again
                     </Button>
-                  </div>
-                  
-                  {/* Quick Response Options */}
-                  <div className="space-y-2">
-                    <span className="text-gray-400 text-xs">Quick responses:</span>
-                    <Button 
-                      onClick={() => setCandidateResponse("Could you please repeat the question?")}
-                      className="px-2 py-1 bg-gray-600 text-gray-300 rounded text-xs hover:bg-gray-500"
-                      disabled={aiSpeaking}
-                    >
-                      Repeat Question
-                    </Button>
-                    <Button 
-                      onClick={() => setCandidateResponse("I need a moment to think about this.")}
-                      className="px-2 py-1 bg-gray-600 text-gray-300 rounded text-xs hover:bg-gray-500"
-                      disabled={aiSpeaking}
-                    >
-                      Thinking
-                    </Button>
-                    <Button 
-                      onClick={() => setCandidateResponse("Can you provide more context about this question?")}
-                      className="px-2 py-1 bg-gray-600 text-gray-300 rounded text-xs hover:bg-gray-500"
-                      disabled={aiSpeaking}
-                    >
-                      Need Clarification
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Controls Overlay */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                <div className="flex items-center space-x-4 bg-gray-800 px-4 py-2 rounded-full shadow-lg">
-                  <Button className="p-2 bg-gray-700 text-white rounded-full hover:bg-gray-600">
-                    <Mic className="w-4 h-4" />
-                  </Button>
-                  <Button className="p-2 bg-gray-700 text-white rounded-full hover:bg-gray-600">
-                    <Camera className="w-4 h-4" />
-                  </Button>
-                  <Button className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700">
-                    <MessageSquare className="w-4 h-4" />
-                  </Button>
-                </div>
+                  </>
+                ) : isInitializing ? (
+                  <>
+                    <p className="text-xl font-medium mb-2">Initializing Interview...</p>
+                    <p className="text-gray-400">Setting up camera and microphone...</p>
+                  </>
+                ) : permissionRequested ? (
+                  <>
+                    <p className="text-xl font-medium mb-2">Loading Camera...</p>
+                    <p className="text-gray-400">Camera is starting up, please wait...</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xl font-medium mb-2">Requesting Camera Access...</p>
+                    <p className="text-gray-400">Please allow camera and microphone permissions to start the interview</p>
+                  </>
+                )}
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Right Panel - Tools & Information */}
-        <div className="w-80 bg-gray-800 border-l border-gray-700 flex flex-col">
-          <div className="p-4 space-y-4 flex-1 overflow-y-auto">
-            {/* Current Question Context */}
-            <div className="bg-gray-700 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3 text-sm flex items-center space-x-2">
-                <MessageSquare className="w-4 h-4" />
-                <span>Question Context</span>
-              </h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Type:</span>
-                  <span className="text-white">HR/Behavioral</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Focus:</span>
-                  <span className="text-white">Company Fit</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Time Left:</span>
-                  <span className="text-white">{Math.max(0, 30 * 60 - interviewTimer)} sec</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* Whiteboard */}
-            <div className="bg-gray-700 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3 text-sm flex items-center space-x-2">
-                <Edit3 className="w-4 h-4" />
-                <span>Whiteboard</span>
-              </h4>
-              <div className="bg-white rounded-lg h-40 p-2 relative">
-                <canvas 
-                  ref={canvasRef}
-                  className="w-full h-full cursor-crosshair"
-                  width={280}
-                  height={140}
-                  onMouseDown={startDrawing}
-                  onMouseMove={draw}
-                  onMouseUp={stopDrawing}
-                />
-                <div className="absolute bottom-2 right-2 flex space-x-2">
-                  <Button 
-                    onClick={() => {
-                      const canvas = canvasRef.current;
-                      if (canvas) {
-                        const ctx = canvas.getContext('2d');
-                        if (ctx) {
-                          ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        }
-                      }
-                    }}
-                    className="px-2 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300"
-                  >
-                    Clear
-                  </Button>
-                  <Button className="px-2 py-1 bg-blue-200 rounded text-xs hover:bg-blue-300">
-                    Save
-                  </Button>
-                </div>
-              </div>
-            </div>
-            
-            {/* Private Notes */}
-            <div className="bg-gray-700 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3 text-sm flex items-center space-x-2">
-                <FileText className="w-4 h-4" />
-                <span>Private Notes</span>
-              </h4>
-              <Textarea 
-                className="w-full h-28 p-3 bg-gray-600 text-white rounded-lg text-sm resize-none border border-gray-500 focus:border-blue-500"
-                placeholder="Take notes during the interview... (Only visible to you)"
-              />
-            </div>
-            
-            {/* Interview Tips */}
-            <div className="bg-gray-700 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3 text-sm flex items-center space-x-2">
-                <Lightbulb className="w-4 h-4" />
-                <span>Live Tips</span>
-              </h4>
-              <div className="space-y-2 text-xs text-gray-300">
-                <div className="flex items-start space-x-2">
-                  <div className="w-1 h-1 bg-blue-400 rounded-full mt-2"></div>
-                  <span>Use STAR method for behavioral questions</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <div className="w-1 h-1 bg-green-400 rounded-full mt-2"></div>
-                  <span>Maintain eye contact with camera</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <div className="w-1 h-1 bg-yellow-400 rounded-full mt-2"></div>
-                  <span>Take time to think before responding</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <div className="w-1 h-1 bg-purple-400 rounded-full mt-2"></div>
-                  <span>Ask clarifying questions when needed</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* Session Controls */}
-            <div className="bg-gray-700 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3 text-sm">Session Controls</h4>
-              <div className="space-y-2">
-                <Button 
-                  onClick={() => {
-                    if (currentQuestion > 0) {
-                      setCurrentQuestion(prev => prev - 1);
-                      setAiResponse(aiQuestions[currentQuestion - 1]);
-                    }
-                  }}
-                  disabled={currentQuestion === 0}
-                  className="w-full p-2 bg-gray-600 text-white rounded text-sm hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          )}
+          
+          {/* Camera Controls - Bottom Center with Blur Background */}
+          {(stream && isVideoReady) && (
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+              <div className="flex items-center space-x-6 bg-black/20 backdrop-blur-md px-8 py-4 rounded-full border border-white/10">
+                <Button
+                  onClick={toggleMicrophone}
+                  className={`p-4 rounded-full transition-all duration-200 ${
+                    isMicOn 
+                      ? 'bg-white/20 hover:bg-white/30 text-white border border-white/20' 
+                      : 'bg-red-500/80 hover:bg-red-600/80 text-white border border-red-400/50'
+                  }`}
                 >
-                  <ChevronLeft className="w-4 h-4 inline mr-1" />
-                  Previous Question
+                  {isMicOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
                 </Button>
-                <Button 
-                  onClick={() => {
-                    setAiResponse('Take your time. I\'m here when you\'re ready to continue with the next part.');
-                  }}
-                  className="w-full p-2 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-500"
+                
+                <Button
+                  onClick={toggleCamera}
+                  className={`p-4 rounded-full transition-all duration-200 ${
+                    isCameraOn 
+                      ? 'bg-white/20 hover:bg-white/30 text-white border border-white/20' 
+                      : 'bg-red-500/80 hover:bg-red-600/80 text-white border border-red-400/50'
+                  }`}
                 >
-                  <Pause className="w-4 h-4 inline mr-1" />
-                  Request Break
-                </Button>
-                <Button 
-                  onClick={() => {
-                    if (currentQuestion < aiQuestions.length - 1) {
-                      setCurrentQuestion(prev => prev + 1);
-                      setAiResponse(aiQuestions[currentQuestion + 1]);
-                    }
-                  }}
-                  disabled={currentQuestion >= aiQuestions.length - 1}
-                  className="w-full p-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight className="w-4 h-4 inline mr-1" />
-                  Next Question
+                  {isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
                 </Button>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

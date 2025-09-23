@@ -319,11 +319,11 @@ export default function MainContent({ searchTerm, setSearchTerm, clearSearch }: 
           )}
 
           {/* Cards Grid with Enhanced Mobile-First Responsive Design */}
-          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-3">
             {filteredInterviews.map((interview, index) => (
                 <Card
                   key={interview.id}
-                  className="group relative overflow-hidden border border-gray-200 hover:border-primary/30 hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm transform hover:scale-[1.015] hover:z-10 w-full shadow-md shadow-gray-200/40 hover:shadow-gray-200/50"
+                  className="group relative overflow-hidden border border-gray-200 hover:border-primary/30 hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm transform hover:scale-[1.012] hover:z-10 w-full shadow-md shadow-gray-200/40 hover:shadow-gray-200/50 scale-95"
                   tabIndex={0}
                   role="article"
                   aria-label={`${interview.company} ${interview.role} interview card`}
@@ -335,15 +335,15 @@ export default function MainContent({ searchTerm, setSearchTerm, clearSearch }: 
                     {/* Animated Border Effect */}
                     <div className="absolute inset-0 rounded-lg border-2 border-transparent bg-gradient-to-r from-primary/20 via-purple-500/20 to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" style={{ background: 'linear-gradient(45deg, transparent, transparent), linear-gradient(45deg, var(--primary), var(--purple-500), var(--primary))', backgroundClip: 'padding-box, border-box' }} />
 
-                    {/* Card Header with Enhanced Visual Hierarchy - Reduced padding by 20% */}
-                  <CardHeader className="pb-1.5 px-4 pt-4">
-                    <div className="flex items-start justify-between mb-1.5">
-                      <div className="flex items-center space-x-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow overflow-hidden">
+                    {/* Card Header with Enhanced Visual Hierarchy - Reduced by 20% */}
+                  <CardHeader className="pb-1.5 px-3 pt-3">
+                    <div className="flex items-start justify-between mb-1">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow overflow-hidden">
                           <img 
                             src={interview.logo} 
                             alt={`${interview.company} logo`}
-                            className="w-5 h-5 object-contain"
+                            className="w-4 h-4 object-contain"
                             onError={(e) => {
                               e.currentTarget.style.display = 'none';
                               const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
@@ -355,50 +355,50 @@ export default function MainContent({ searchTerm, setSearchTerm, clearSearch }: 
                           <span className="text-xs hidden">{interview.company.charAt(0)}</span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-sm font-semibold text-gray-900 line-clamp-1 group-hover:text-primary transition-colors">
+                          <CardTitle className="text-xs font-semibold text-gray-900 line-clamp-1 group-hover:text-primary transition-colors">
                             {interview.company}
                           </CardTitle>
-                          <p className="text-xs text-gray-600 font-medium mt-0.5">
+                          <p className="text-xs text-gray-600 font-medium mt-0.5 text-[10px]">
                             {interview.role}
                           </p>
                         </div>
                       </div>
                       <Badge 
                         variant={interview.difficulty === 'Hard' ? 'destructive' : interview.difficulty === 'Medium' ? 'secondary' : 'outline'}
-                        className="text-xs font-medium shrink-0 px-2 py-0.5"
+                        className="text-[10px] font-medium shrink-0 px-1.5 py-0.5"
                       >
                         {interview.difficulty}
                       </Badge>
                     </div>
                   </CardHeader>
 
-                  {/* Card Content with Better Organization - Reduced padding by 20% */}
-                  <CardContent className="pt-0 pb-2.5 px-4">
-                    <CardDescription className="text-xs text-gray-600 line-clamp-2 mb-2.5 leading-relaxed">
+                  {/* Card Content with Better Organization - Reduced by 20% */}
+                  <CardContent className="pt-0 pb-2 px-3">
+                    <CardDescription className="text-[10px] text-gray-600 line-clamp-2 mb-2 leading-relaxed">
                       {interview.description}
                     </CardDescription>
                     
-                    {/* Performance Indicators with Visual Enhancement - Reduced spacing by 20% */}
-                    <div className="flex items-center justify-between pt-2.5 border-t border-gray-100 mb-2.5">
-                      <div className="flex items-center space-x-3 text-xs text-gray-500">
+                    {/* Performance Indicators with Visual Enhancement - Reduced by 20% */}
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-100 mb-2">
+                      <div className="flex items-center space-x-2 text-[10px] text-gray-500">
                         <div className="flex items-center">
-                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1 animate-pulse"></div>
+                          <div className="w-1 h-1 bg-green-500 rounded-full mr-1 animate-pulse"></div>
                           <span>Active</span>
                         </div>
                         <div className="flex items-center">
-                          <Clock className="w-2.5 h-2.5 mr-1" />
+                          <Clock className="w-2 h-2 mr-1" />
                           45-60 min
                         </div>
                         <div className="flex items-center">
-                          <Users className="w-2.5 h-2.5 mr-1" />
-                          {Math.floor(Math.random() * 500) + 100}+ taken
+                          <Users className="w-2 h-2 mr-1" />
+                          {Math.floor(Math.random() * 500) + 100}+
                         </div>
                       </div>
                       <div className="flex items-center space-x-0.5">
                         {[...Array(5)].map((_, i) => (
                           <div
                             key={i}
-                            className={`w-0.5 h-2.5 rounded-full transition-all duration-300 ${
+                            className={`w-0.5 h-2 rounded-full transition-all duration-300 ${
                               i < Math.floor(Math.random() * 5) + 1
                                 ? 'bg-gradient-to-t from-primary to-purple-500'
                                 : 'bg-gray-200'
@@ -409,15 +409,15 @@ export default function MainContent({ searchTerm, setSearchTerm, clearSearch }: 
                       </div>
                     </div>
                     
-                    {/* Call-to-Action Button - Properly Contained - Reduced size by 20% */}
+                    {/* Call-to-Action Button - Reduced by 20% */}
                     <Button
-                      className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700 text-white font-medium transition-all duration-300 transform hover:scale-[1.015] hover:shadow-md group-hover:shadow-primary/25 h-8"
+                      className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700 text-white font-medium transition-all duration-300 transform hover:scale-[1.012] hover:shadow-md group-hover:shadow-primary/25 h-7"
                       size="sm"
                       onClick={() => handleInterviewClick(interview)}
                     >
-                      <span className="flex items-center justify-center text-xs">
+                      <span className="flex items-center justify-center text-[10px]">
                         Start Interview
-                        <div className="ml-1.5 transform transition-transform duration-300 group-hover:translate-x-1">
+                        <div className="ml-1 transform transition-transform duration-300 group-hover:translate-x-1">
                           →
                         </div>
                       </span>
