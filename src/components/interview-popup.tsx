@@ -28,8 +28,7 @@ import {
   Building2,
   TrendingUp
 } from "lucide-react";
-import PermissionScreen from "@/components/permission-screen";
-import InterviewInterface from "@/components/interview-interface";
+import LiveInterviewInterface from "@/components/live-interview-interface";
 
 interface InterviewPopupProps {
   isOpen: boolean;
@@ -56,8 +55,6 @@ export default function InterviewPopup({
 }: InterviewPopupProps) {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [isResumeUploaded, setIsResumeUploaded] = useState(false);
-  const [showPermissionScreen, setShowPermissionScreen] = useState(false);
-  const [showInterviewInterface, setShowInterviewInterface] = useState(false);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -68,31 +65,32 @@ export default function InterviewPopup({
   };
 
   const handleStartInterview = () => {
-    onClose(); // Close the popup first
-    setShowPermissionScreen(true);
+    // Navigate to separate interview page
+    const encodedCompany = encodeURIComponent(company);
+    const encodedRole = encodeURIComponent(role);
+    window.location.href = `/interview/${encodedCompany}/${encodedRole}`;
+    onClose(); // Close the popup
   };
 
-  const handlePermissionsGranted = () => {
-    setShowPermissionScreen(false);
-    setShowInterviewInterface(true);
-    onClose(); // Close the popup when starting interview
+  const handleEndInterview = () => {
+    // This function is no longer needed since we navigate to a separate page
+    onStartInterview(); // Call the parent's onStartInterview to handle post-interview flow
   };
 
   return (
-    <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl max-h-[85vh] p-0 overflow-hidden bg-white border-0 shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-100 duration-150">
           <div className="overflow-y-auto max-h-[85vh] scrollbar-hide">
             {/* Header Section */}
             <div className="relative bg-gradient-to-br from-blue-50 via-white to-purple-50 p-5">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-white to-gray-50 rounded-xl flex items-center justify-center shadow-md border border-gray-100/50 overflow-hidden">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
                     {logo ? (
                       <img 
                         src={logo} 
                         alt={`${company} logo`}
-                        className="w-7 h-7 object-contain"
+                        className="w-8 h-8 object-contain"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                           const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
@@ -102,29 +100,15 @@ export default function InterviewPopup({
                         }}
                       />
                     ) : null}
-                    <div className={`w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center ${logo ? 'hidden' : 'flex'}`}>
-                      <Building2 className="w-4 h-4 text-white" />
+                    <div className={`w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg ${logo ? 'hidden' : ''}`}>
+                      <Building2 className="w-5 h-5 text-white" />
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <DialogTitle className="text-xl font-bold text-gray-900">
-                      {company}
-                    </DialogTitle>
-                    <div className="text-base font-semibold text-gray-700">{role}</div>
-                    <DialogDescription className="text-gray-600 flex items-center gap-2 text-sm">
-                      <Clock className="w-3 h-3" />
-                      Prepare for your interview with confidence
-                    </DialogDescription>
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">{company}</h2>
+                    <p className="text-sm text-gray-600 font-medium">{role}</p>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onClose}
-                  className="hover:bg-red-50 hover:text-red-600 transition-colors duration-200 rounded-full"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
               </div>
             </div>
             
@@ -166,7 +150,8 @@ export default function InterviewPopup({
                 </div>
               </div>
 
-              {/* Guidelines Section */}
+              {/* Guidelines Section - Commented out for testing */}
+              {/*
               <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
@@ -211,12 +196,13 @@ export default function InterviewPopup({
                 <div className="mt-2 p-2 bg-red-50 rounded-lg border border-red-100">
                   <div className="flex items-start gap-2">
                     <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <X className="w-2 h-2 text-white" />
+                      <AlertCircle className="w-2 h-2 text-white" />
                     </div>
                     <span className="text-red-700 text-xs font-medium">No external help or resources allowed</span>
                   </div>
                 </div>
               </div>
+              */}
 
               {/* Resume Upload Section */}
               <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
@@ -307,27 +293,5 @@ export default function InterviewPopup({
           </div>
         </DialogContent>
       </Dialog>
-    
-    {/* Permission Screen */}
-    {showPermissionScreen && (
-      <PermissionScreen
-        isOpen={showPermissionScreen}
-        onClose={() => setShowPermissionScreen(false)}
-        onPermissionsGranted={handlePermissionsGranted}
-        company={company}
-        role={role}
-      />
-    )}
-    
-    {/* Interview Interface */}
-    {showInterviewInterface && (
-      <InterviewInterface
-        isOpen={showInterviewInterface}
-        onClose={() => setShowInterviewInterface(false)}
-        company={company}
-        role={role}
-      />
-    )}
-    </>
   );
 }

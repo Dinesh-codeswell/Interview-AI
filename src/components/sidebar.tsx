@@ -139,29 +139,14 @@ export default function Sidebar() {
 
       {/* Sidebar Footer - Compact Design */}
       <div className="p-3 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-        <div className="flex items-center space-x-2 mb-2">
-          <Avatar className="h-7 w-7 ring-2 ring-gray-200">
+        <div className="flex items-center justify-center">
+          <Avatar className="h-8 w-8 ring-2 ring-gray-200">
             <AvatarImage src="/avatars/01.png" alt="User" />
             <AvatarFallback className="bg-primary text-primary-foreground text-xs">JD</AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-gray-900 truncate">John Doe</p>
-            <p className="text-xs text-gray-500 truncate">Pro Member</p>
-          </div>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100">
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100 ml-2">
             <Settings className="h-3 w-3" />
           </Button>
-        </div>
-        
-        {/* Progress Indicator - Compact */}
-        <div className="space-y-1">
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-medium text-gray-600">Monthly Goal</span>
-            <span className="text-xs text-gray-500">8/10</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-1.5">
-            <div className="bg-gradient-to-r from-primary to-purple-600 h-1.5 rounded-full" style={{ width: '80%' }}></div>
-          </div>
         </div>
       </div>
       </aside>

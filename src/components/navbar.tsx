@@ -15,11 +15,22 @@ export default function Navbar({ searchTerm, setSearchTerm, clearSearch }: {
         <div className="flex justify-between items-center h-20">
           {/* Logo Section - Moved to extreme left */}
           <div className="flex items-center space-x-4 mr-8">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-md">
-              <span className="text-white font-bold text-base">IA</span>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 whitespace-nowrap">Interview Ace</h2>
+            <div className="flex items-center">
+              <img 
+                src="/avatars/beyond-career-logo.png" 
+                alt="Beyond Career Logo"
+                className="h-10 w-auto object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (nextElement) {
+                    nextElement.style.display = 'flex';
+                  }
+                }}
+              />
+              <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-md hidden">
+                <span className="text-white font-bold text-base">BC</span>
+              </div>
             </div>
           </div>
 
@@ -92,13 +103,13 @@ export default function Navbar({ searchTerm, setSearchTerm, clearSearch }: {
             <Button 
               variant="outline" 
               size="default"
-              className="btn-enhanced border-primary text-primary hover:bg-primary hover:text-primary-foreground focus:ring-2 focus:ring-primary focus:ring-offset-2 px-5 py-2.5"
+              className="btn-enhanced border-primary text-primary hover:bg-primary hover:text-primary-foreground px-5 py-2.5"
               aria-label="Upgrade to Pro version"
             >
               Upgrade Pro
             </Button>
             <Button 
-              className="btn-enhanced btn-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 px-5 py-2.5 ml-3"
+              className="btn-enhanced btn-primary px-5 py-2.5 ml-3"
               aria-label="Start a new interview session"
             >
               <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
@@ -108,16 +119,13 @@ export default function Navbar({ searchTerm, setSearchTerm, clearSearch }: {
             {/* User Profile - Enhanced Design with Accessibility */}
             <div className="relative ml-6">
               <button 
-                className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200"
                 aria-label="Open user menu"
                 aria-expanded="false"
                 aria-haspopup="true"
               >
                 <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center shadow-md">
                   <span className="text-white text-base font-medium">JD</span>
-                </div>
-                <div className="hidden lg:block text-left">
-                  <p className="text-base font-medium text-gray-900">John Doe</p>
                 </div>
                 <ChevronDown className="w-5 h-5 text-gray-400" aria-hidden="true" />
               </button>
@@ -128,7 +136,7 @@ export default function Navbar({ searchTerm, setSearchTerm, clearSearch }: {
           <div className="md:hidden">
             <button
               type="button"
-              className="bg-gray-50 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary transition-colors duration-200"
+              className="bg-gray-50 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors duration-200"
               aria-controls="mobile-menu"
               aria-expanded="false"
               aria-label="Open main menu"
@@ -152,21 +160,21 @@ export default function Navbar({ searchTerm, setSearchTerm, clearSearch }: {
           </a>
           <a
             href="#"
-            className="text-gray-600 hover:text-primary hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="text-gray-600 hover:text-primary hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
             role="menuitem"
           >
             Practice
           </a>
           <a
             href="#"
-            className="text-gray-600 hover:text-primary hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="text-gray-600 hover:text-primary hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
             role="menuitem"
           >
             Analytics
           </a>
           <a
             href="#"
-            className="text-gray-600 hover:text-primary hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="text-gray-600 hover:text-primary hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
             role="menuitem"
           >
             Resources
