@@ -6,15 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Home,
   Settings,
-  HelpCircle,
-  User,
   BookOpen,
   Trophy,
   BarChart3,
   MessageSquare,
   Plus,
   Calendar,
-  Target,
   Menu,
   X
 } from "lucide-react";

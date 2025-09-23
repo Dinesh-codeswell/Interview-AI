@@ -24,11 +24,8 @@ import {
   CheckCircle,
   AlertCircle,
   Users,
-  Calendar,
   Target,
   Building2,
-  Camera,
-  Mic,
   TrendingUp
 } from "lucide-react";
 import PermissionScreen from "@/components/permission-screen";
@@ -98,7 +95,10 @@ export default function InterviewPopup({
                         className="w-7 h-7 object-contain"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
-                          e.currentTarget.nextElementSibling.style.display = 'flex';
+                          const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                          if (nextElement) {
+                            nextElement.style.display = 'flex';
+                          }
                         }}
                       />
                     ) : null}

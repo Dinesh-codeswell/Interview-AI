@@ -8,11 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Search, 
   Filter, 
-  Star,
-  TrendingUp,
   Users,
   Clock,
-  Target,
   X,
   Code,
   Database,
@@ -97,8 +94,7 @@ export default function MainContent({ searchTerm, setSearchTerm, clearSearch }: 
 }) {
   const [activeCategory, setActiveCategory] = useState("All");
   const [activeTab, setActiveTab] = useState("All Interviews");
-  const [viewMode, setViewMode] = useState("grid");
-  const [selectedInterview, setSelectedInterview] = useState<any>(null);
+  const [selectedInterview, setSelectedInterview] = useState<typeof interviewTypes[0] | null>(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -110,7 +106,7 @@ export default function MainContent({ searchTerm, setSearchTerm, clearSearch }: 
     return matchesSearch && matchesCategory;
   });
 
-  const handleInterviewClick = (interview: any) => {
+  const handleInterviewClick = (interview: typeof interviewTypes[0]) => {
     setSelectedInterview(interview);
     setIsPopupOpen(true);
   };
@@ -257,7 +253,10 @@ export default function MainContent({ searchTerm, setSearchTerm, clearSearch }: 
                             className="w-6 h-6 object-contain"
                             onError={(e) => {
                               e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling.style.display = 'block';
+                              const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                              if (nextElement) {
+                                nextElement.style.display = 'block';
+                              }
                             }}
                           />
                           <span className="text-sm hidden">{interview.company.charAt(0)}</span>

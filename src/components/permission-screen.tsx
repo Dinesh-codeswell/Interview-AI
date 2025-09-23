@@ -204,7 +204,7 @@ export default function PermissionScreen({
                       <h4 className="font-medium text-red-900">Permission Denied</h4>
                       <p className="text-sm text-red-700 mt-1">
                         Please check your browser settings and allow camera/microphone access for this site. 
-                        You may need to click the camera/microphone icon in your browser's address bar.
+                        You may need to click the camera/microphone icon in your browser&apos;s address bar.
                       </p>
                     </div>
                   </div>
