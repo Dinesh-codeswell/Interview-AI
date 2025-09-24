@@ -2,38 +2,24 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { 
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import { 
-  X,
   Clock,
-  MapPin,
-  Briefcase,
   Upload,
   FileText,
   CheckCircle,
-  AlertCircle,
-  Users,
   Target,
   Building2,
   TrendingUp
 } from "lucide-react";
-import LiveInterviewInterface from "@/components/live-interview-interface";
+import Image from "next/image";
 
 interface InterviewPopupProps {
   isOpen: boolean;
   onClose: () => void;
-  onStartInterview: () => void;
   company: string;
   role: string;
   duration: string;
@@ -45,7 +31,6 @@ interface InterviewPopupProps {
 export default function InterviewPopup({
   isOpen,
   onClose,
-  onStartInterview,
   company,
   role,
   duration,
@@ -72,14 +57,9 @@ export default function InterviewPopup({
     onClose(); // Close the popup
   };
 
-  const handleEndInterview = () => {
-    // This function is no longer needed since we navigate to a separate page
-    onStartInterview(); // Call the parent's onStartInterview to handle post-interview flow
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[85vh] p-0 overflow-hidden bg-white border-0 shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-100 duration-150">
+        <DialogContent className="max-w-4xl max-h-[85vh] p-0 overflow-hidden bg-white border-0 shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-state=closed]:zoom-out-95 data-[state=open]:zoom-in-100 duration-150">
           <div className="overflow-y-auto max-h-[85vh] scrollbar-hide">
             {/* Header Section */}
             <div className="relative bg-gradient-to-br from-blue-50 via-white to-purple-50 p-5">
@@ -87,10 +67,12 @@ export default function InterviewPopup({
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
                     {logo ? (
-                      <img 
+                      <Image 
                         src={logo} 
                         alt={`${company} logo`}
-                        className="w-8 h-8 object-contain"
+                        width={32}
+                        height={32}
+                        className="object-contain"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                           const nextElement = e.currentTarget.nextElementSibling as HTMLElement;

@@ -15,11 +15,11 @@ import {
   Database,
   Calculator,
   FileText,
-  DollarSign,
-  Grid
+  DollarSign
 } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
 import InterviewPopup from "@/components/interview-popup";
+import Image from "next/image";
 
 const interviewTypes = [
   {
@@ -140,11 +140,6 @@ export default function MainContent({ searchTerm, setSearchTerm, clearSearch }: 
   const handleInterviewClick = (interview: typeof interviewTypes[0]) => {
     setSelectedInterview(interview);
     setIsPopupOpen(true);
-  };
-
-  const handleStartInterview = () => {
-    // This will be implemented when we create the permission screen
-    console.log("Starting interview for:", selectedInterview?.company);
   };
 
   return (
@@ -340,10 +335,12 @@ export default function MainContent({ searchTerm, setSearchTerm, clearSearch }: 
                     <div className="flex items-start justify-between mb-1">
                       <div className="flex items-center space-x-2">
                         <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow overflow-hidden">
-                          <img 
+                          <Image 
                             src={interview.logo} 
                             alt={`${interview.company} logo`}
-                            className="w-4 h-4 object-contain"
+                            width={16}
+                            height={16}
+                            className="object-contain"
                             onError={(e) => {
                               e.currentTarget.style.display = 'none';
                               const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
@@ -456,7 +453,6 @@ export default function MainContent({ searchTerm, setSearchTerm, clearSearch }: 
       <InterviewPopup
         isOpen={isPopupOpen}
         onClose={() => setIsPopupOpen(false)}
-        onStartInterview={handleStartInterview}
         company={selectedInterview.company}
         role={selectedInterview.role}
         duration="45-60 min"

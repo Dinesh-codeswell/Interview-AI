@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Menu, ChevronDown, Search, X } from "lucide-react";
+import Image from "next/image";
 
 export default function Navbar({ searchTerm, setSearchTerm, clearSearch }: { 
   searchTerm: string; 
@@ -16,10 +17,12 @@ export default function Navbar({ searchTerm, setSearchTerm, clearSearch }: {
           {/* Logo Section - Moved to extreme left */}
           <div className="flex items-center space-x-4 mr-8">
             <div className="flex items-center">
-              <img 
+              <Image 
                 src="/avatars/beyond-career-logo.png" 
                 alt="Beyond Career Logo"
-                className="h-10 w-auto object-contain"
+                width={40}
+                height={40}
+                className="object-contain"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                   const nextElement = e.currentTarget.nextElementSibling as HTMLElement;

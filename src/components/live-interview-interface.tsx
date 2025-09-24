@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Mic, 
   MicOff, 
@@ -10,6 +9,19 @@ import {
   VideoOff, 
   Clock
 } from "lucide-react";
+
+// Interface for browser fullscreen APIs
+interface DocumentWithFullscreen extends Document {
+  webkitFullscreenElement?: Element;
+  msFullscreenElement?: Element;
+  mozFullScreenElement?: Element;
+}
+
+interface ElementWithFullscreen extends Element {
+  webkitRequestFullscreen?: () => Promise<void>;
+  msRequestFullscreen?: () => Promise<void>;
+  mozRequestFullScreen?: () => Promise<void>;
+}
 
 interface LiveInterviewInterfaceProps {
   company: string;
@@ -23,7 +35,6 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isMicOn, setIsMicOn] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [permissionRequested, setPermissionRequested] = useState(false);
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +62,7 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
   };
 
   // Cleanup function for streams
-  const cleanupStreams = () => {
+  const cleanupStreams = useCallback(() => {
     console.log('🧹 Cleaning up existing streams...');
     
     // Stop current stream
@@ -81,10 +92,10 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
     }
     
     console.log('✅ Stream cleanup completed');
-  };
+  }, [stream]);
 
   // Enter fullscreen mode
-  const enterFullscreen = async () => {
+  const enterFullscreen = useCallback(async () => {
     try {
       console.log('🔄 Attempting to enter fullscreen mode...');
       
@@ -100,14 +111,14 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
       if (element.requestFullscreen) {
         await element.requestFullscreen();
         console.log('✅ Standard fullscreen API used');
-      } else if ((element as any).webkitRequestFullscreen) {
-        await (element as any).webkitRequestFullscreen();
+      } else if ((element as ElementWithFullscreen).webkitRequestFullscreen) {
+        await (element as ElementWithFullscreen).webkitRequestFullscreen!();
         console.log('✅ WebKit fullscreen API used');
-      } else if ((element as any).msRequestFullscreen) {
-        await (element as any).msRequestFullscreen();
+      } else if ((element as ElementWithFullscreen).msRequestFullscreen) {
+        await (element as ElementWithFullscreen).msRequestFullscreen!();
         console.log('✅ MS fullscreen API used');
-      } else if ((element as any).mozRequestFullScreen) {
-        await (element as any).mozRequestFullScreen();
+      } else if ((element as ElementWithFullscreen).mozRequestFullScreen) {
+        await (element as ElementWithFullscreen).mozRequestFullScreen!();
         console.log('✅ Mozilla fullscreen API used');
       } else {
         console.warn('⚠️ Fullscreen API not supported');
@@ -119,20 +130,18 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
         return;
       }
       
-      setIsFullscreen(true);
       console.log('🎯 Fullscreen mode activated successfully');
       
       // Add fullscreen change listeners
       const handleFullscreenChange = () => {
         const isCurrentlyFullscreen = !!(
           document.fullscreenElement ||
-          (document as any).webkitFullscreenElement ||
-          (document as any).msFullscreenElement ||
-          (document as any).mozFullScreenElement
+          (document as DocumentWithFullscreen).webkitFullscreenElement ||
+          (document as DocumentWithFullscreen).msFullscreenElement ||
+          (document as DocumentWithFullscreen).mozFullScreenElement
         );
         
         console.log('📱 Fullscreen state changed:', isCurrentlyFullscreen);
-        setIsFullscreen(isCurrentlyFullscreen);
         
         if (!isCurrentlyFullscreen) {
           console.log('📤 Exited fullscreen mode');
@@ -161,36 +170,44 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
       document.body.style.margin = '0';
       document.body.style.padding = '0';
     }
-  };
+  }, [stream, isVideoReady]);
 
   // Exit fullscreen mode
   const exitFullscreen = async () => {
     try {
       console.log('Attempting to exit fullscreen...');
       
-      if (document.exitFullscreen && document.fullscreenElement) {
-        await document.exitFullscreen();
-      } else if ((document as any).webkitExitFullscreen && (document as any).webkitFullscreenElement) {
-        await (document as any).webkitExitFullscreen();
-      } else if ((document as any).msExitFullscreen && (document as any).msFullscreenElement) {
-        await (document as any).msExitFullscreen();
-      } else if ((document as any).mozCancelFullScreen && (document as any).mozFullScreenElement) {
-        await (document as any).mozCancelFullScreen();
+      // Add proper type definitions for browser fullscreen APIs
+      interface DocumentWithFullscreen extends Document {
+        webkitExitFullscreen?: () => Promise<void>;
+        webkitFullscreenElement?: Element;
+        msExitFullscreen?: () => Promise<void>;
+        msFullscreenElement?: Element;
+        mozCancelFullScreen?: () => Promise<void>;
+        mozFullScreenElement?: Element;
       }
       
-      setIsFullscreen(false);
+      if (document.exitFullscreen && document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if ((document as DocumentWithFullscreen).webkitExitFullscreen && (document as DocumentWithFullscreen).webkitFullscreenElement) {
+        await (document as DocumentWithFullscreen).webkitExitFullscreen?.();
+      } else if ((document as DocumentWithFullscreen).msExitFullscreen && (document as DocumentWithFullscreen).msFullscreenElement) {
+        await (document as DocumentWithFullscreen).msExitFullscreen?.();
+      } else if ((document as DocumentWithFullscreen).mozCancelFullScreen && (document as DocumentWithFullscreen).mozFullScreenElement) {
+        await (document as DocumentWithFullscreen).mozCancelFullScreen?.();
+      }
+      
       document.body.style.overflow = 'auto'; // Restore scrolling
       console.log('Fullscreen mode deactivated');
       
     } catch (error) {
       console.error('Error exiting fullscreen:', error);
-      setIsFullscreen(false);
       document.body.style.overflow = 'auto';
     }
   };
 
   // Request media access with proper error handling
-  const requestMediaAccess = async () => {
+  const requestMediaAccess = useCallback(async () => {
     try {
       console.log('🎥 Starting media access request...');
       setPermissionRequested(true);
@@ -322,25 +339,26 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
         setError('Video element not ready');
       }
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Media access failed:', error);
       
       // Handle specific error types
       let errorMessage = 'Camera access failed';
       
-      if (error.name === 'NotReadableError') {
-        errorMessage = 'Camera is already in use by another application. Please close other apps using the camera and try again.';
-      } else if (error.name === 'NotAllowedError') {
-        errorMessage = 'Camera and microphone access denied. Please allow permissions and refresh the page.';
-      } else if (error.name === 'NotFoundError') {
-        errorMessage = 'No camera or microphone found. Please connect a camera and microphone.';
-      } else if (error.name === 'OverconstrainedError') {
-        errorMessage = 'Camera constraints not supported. Trying with minimal settings...';
-        
-        // Retry with minimal constraints
-        try {
-          console.log('🔄 Retrying with minimal constraints...');
-          const minimalStream = await navigator.mediaDevices.getUserMedia({
+      if (error instanceof Error) {
+        if (error.name === 'NotReadableError') {
+          errorMessage = 'Camera is already in use by another application. Please close other apps using the camera and try again.';
+        } else if (error.name === 'NotAllowedError') {
+          errorMessage = 'Camera and microphone access denied. Please allow permissions and refresh the page.';
+        } else if (error.name === 'NotFoundError') {
+          errorMessage = 'No camera or microphone found. Please connect a camera and microphone.';
+        } else if (error.name === 'OverconstrainedError') {
+          errorMessage = 'Camera constraints not supported. Trying with minimal settings...';
+          
+          // Retry with minimal constraints
+          try {
+            console.log('🔄 Retrying with minimal constraints...');
+            const minimalStream = await navigator.mediaDevices.getUserMedia({
             video: true,
             audio: true
           });
@@ -364,13 +382,14 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
           errorMessage = 'Camera initialization failed even with minimal settings. Please check your camera.';
         }
       }
+    }
       
       setError(errorMessage);
       setPermissionRequested(false);
       setIsVideoReady(false);
       setIsInitializing(false);
     }
-  };
+  }, [cleanupStreams, enterFullscreen]);
 
   // Handle end interview
   const handleEndInterview = async () => {
@@ -444,7 +463,7 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
       clearTimeout(timeoutId);
       cleanupStreams();
     };
-  }, []); // Empty dependency array to run only once
+  }, [requestMediaAccess, cleanupStreams]); // Add missing dependencies
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
