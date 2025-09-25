@@ -72,14 +72,17 @@ tts-local/venv/
 tts-local/*.wav
 tts-local/*.mp3
 
-# Piper model files and binaries (can be downloaded separately)
-tts-local/piper/*.onnx
-tts-local/piper/*.onnx.json
-tts-local/piper/*.dll
-tts-local/piper/*.exe
-tts-local/piper/*.ort
-tts-local/piper/espeak-ng-data/
-tts-local/piper/pkgconfig/
+# Piper model files and binaries - ALLOW ESSENTIAL FILES FOR DEPLOYMENT
+# Keep essential model files and binaries for TTS functionality
+# tts-local/piper/*.onnx
+# tts-local/piper/*.onnx.json
+# tts-local/piper/*.dll
+# tts-local/piper/*.exe
+# tts-local/piper/*.ort
+# tts-local/piper/espeak-ng-data/
+# tts-local/piper/pkgconfig/
+
+# Only ignore generated audio files
 tts-local/piper/*.wav
 
 # Python cache files
