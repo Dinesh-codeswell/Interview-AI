@@ -119,6 +119,9 @@ wheels/
 .installed.cfg
 *.egg
 
+# Exception: Don't ignore src/lib directory (Next.js project structure)
+!src/lib/
+
 # PyInstaller
 *.manifest
 *.spec
