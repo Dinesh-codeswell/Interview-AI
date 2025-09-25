@@ -56,16 +56,43 @@ export const useInterviewEngine = ({ company, role, mediaStream, onInterviewComp
           interviewPhase: 'speaking'
         }));
         
-        // Start with the first question
-        await speakQuestion(data.questions[0].text);
+        // Start with the first question - call directly to avoid circular dependency
+        const firstQuestionText = data.questions[0].text;
+        setState(prev => ({ ...prev, isAISpeaking: true, interviewPhase: 'speaking' }));
+        
+        try {
+          console.log('🔊 Generating TTS for first question:', firstQuestionText.substring(0, 50) + '...');
+          
+          const response = await fetch('http://localhost:8001/tts', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ text: firstQuestionText })
+          });
+
+          if (response.ok) {
+            const audioBlob = await response.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            
+            if (audioRef.current) {
+              audioRef.current.src = audioUrl;
+              await audioRef.current.play();
+            }
+          }
+        } catch (error) {
+          console.error('TTS Error for first question:', error);
+        } finally {
+          setState(prev => ({ ...prev, isAISpeaking: false, interviewPhase: 'listening' }));
+        }
       }
     } catch (error) {
       console.error('Failed to load questions:', error);
     }
-  }, [company, role]);
+  }, [company, role]); // Remove speakQuestion dependency to avoid circular reference
 
   // Speak question using TTS
-  const speakQuestion = useCallback(async (text: string) => {
+  const speakQuestion: (text: string) => Promise<void> = useCallback(async (text: string) => {
     setState(prev => ({ ...prev, isAISpeaking: true, interviewPhase: 'speaking' }));
     
     try {
@@ -122,11 +149,11 @@ export const useInterviewEngine = ({ company, role, mediaStream, onInterviewComp
             console.log('🔊 Starting audio playback...');
             await audioRef.current.play();
             console.log('✅ Audio playback started successfully');
-          } catch (playError) {
+          } catch (playError: unknown) {
             console.error('❌ Audio play failed:', playError);
             
             // Check if it's an autoplay policy issue
-            if (playError.name === 'NotAllowedError') {
+            if (playError instanceof Error && playError.name === 'NotAllowedError') {
               console.warn('🚫 Autoplay blocked by browser policy');
               alert('Please click anywhere on the page to enable audio playback, then the interview will continue.');
               
@@ -166,7 +193,7 @@ export const useInterviewEngine = ({ company, role, mediaStream, onInterviewComp
       }));
       startListening();
     }
-  }, []);
+  }, []); // Remove startListening dependency to avoid circular reference
 
   // Play welcome audio with guidelines
   const playWelcomeAudio = useCallback(async () => {
@@ -205,7 +232,7 @@ export const useInterviewEngine = ({ company, role, mediaStream, onInterviewComp
             setState(prev => ({ 
               ...prev, 
               isAISpeaking: false, 
-              interviewPhase: 'ready' 
+              interviewPhase: 'listening' 
             }));
             // Start the first question after welcome message
             setTimeout(() => {
@@ -222,7 +249,7 @@ export const useInterviewEngine = ({ company, role, mediaStream, onInterviewComp
             setState(prev => ({ 
               ...prev, 
               isAISpeaking: false, 
-              interviewPhase: 'ready' 
+              interviewPhase: 'listening' 
             }));
             setTimeout(() => {
               if (state.questions.length > 0) {
@@ -237,11 +264,11 @@ export const useInterviewEngine = ({ company, role, mediaStream, onInterviewComp
             console.log('🎉 Starting welcome audio playback...');
             await audioRef.current.play();
             console.log('✅ Welcome audio playback started successfully');
-          } catch (playError) {
+          } catch (playError: unknown) {
             console.error('❌ Welcome audio play failed:', playError);
             
             // Check if it's an autoplay policy issue
-            if (playError.name === 'NotAllowedError') {
+            if (playError instanceof Error && playError.name === 'NotAllowedError') {
               console.warn('🚫 Welcome audio autoplay blocked by browser policy');
               alert('Welcome! Please click anywhere on the page to start the interview with audio.');
               
@@ -257,7 +284,7 @@ export const useInterviewEngine = ({ company, role, mediaStream, onInterviewComp
                   setState(prev => ({ 
                     ...prev, 
                     isAISpeaking: false, 
-                    interviewPhase: 'ready' 
+                    interviewPhase: 'listening' 
                   }));
                   setTimeout(() => {
                     if (state.questions.length > 0) {
@@ -272,7 +299,7 @@ export const useInterviewEngine = ({ company, role, mediaStream, onInterviewComp
               setState(prev => ({ 
                 ...prev, 
                 isAISpeaking: false, 
-                interviewPhase: 'ready' 
+                interviewPhase: 'listening' 
               }));
               setTimeout(() => {
                 if (state.questions.length > 0) {
@@ -292,7 +319,7 @@ export const useInterviewEngine = ({ company, role, mediaStream, onInterviewComp
       setState(prev => ({ 
         ...prev, 
         isAISpeaking: false, 
-        interviewPhase: 'ready' 
+        interviewPhase: 'listening' 
       }));
       // Still start the interview
       setTimeout(() => {
@@ -380,7 +407,7 @@ export const useInterviewEngine = ({ company, role, mediaStream, onInterviewComp
        }
      }, 1000);
      
-     silenceTimeoutRef.current = interval as any;
+     silenceTimeoutRef.current = interval;
    }, [resetSilenceTimer, moveToNextQuestion]);
 
   // Start audio streaming to STT server
@@ -588,7 +615,7 @@ export const useInterviewEngine = ({ company, role, mediaStream, onInterviewComp
       console.log('🎤 Media stream available, establishing STT WebSocket connection...');
       startListening();
     }
-  }, [mediaStream, startListening]);
+  }, [mediaStream, startListening, state.questions.length]);
 
   return {
     ...state,

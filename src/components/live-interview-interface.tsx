@@ -70,7 +70,6 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
 
   // Extract values directly from the hook
   const {
-    questions,
     currentQuestion,
     currentQuestionIndex,
     isAISpeaking,
@@ -78,9 +77,7 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
     currentTranscription,
     finalTranscription,
     silenceTimer,
-    interviewPhase,
-    moveToNextQuestion,
-    resetSilenceTimer
+    interviewPhase
   } = interviewEngine;
 
   // Update messages when AI speaks or user responds
@@ -382,11 +379,13 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
         setError(null);
       };
 
-      const handleVideoError = (event: Event) => {
+      const handleVideoError = (event: string | Event) => {
         console.error('📹 Video error:', event);
-        const videoElement = event.target as HTMLVideoElement;
-        if (videoElement && videoElement.error) {
-          console.error('Video error details:', videoElement.error);
+        if (typeof event !== 'string') {
+          const videoElement = event.target as HTMLVideoElement;
+          if (videoElement && videoElement.error) {
+            console.error('Video error details:', videoElement.error);
+          }
         }
       };
 
@@ -649,7 +648,7 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
       clearTimeout(timeoutId);
       cleanupStreams();
     };
-  }, []); // Empty dependency array - only run once on mount
+  }, [cleanupStreams, requestMediaAccess]); // Include dependencies
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">

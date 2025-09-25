@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { spawn } from 'child_process';
+import { spawn, ChildProcess } from 'child_process';
 import path from 'path';
 
-let ttsProcess: any = null;
+let ttsProcess: ChildProcess | null = null;
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // First, check if TTS server is already running on port 8001
     try {
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
           alreadyRunning: true
         });
       }
-    } catch (healthError) {
+    } catch (_healthError) {
       // Server not running, continue with startup
       console.log('TTS Server not running, starting new instance...');
     }
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   return NextResponse.json({
     running: ttsProcess && !ttsProcess.killed,
     pid: ttsProcess?.pid || null

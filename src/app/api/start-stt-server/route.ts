@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { spawn } from 'child_process';
+import { spawn, ChildProcess } from 'child_process';
 import path from 'path';
 
-let sttProcess: any = null;
+let sttProcess: ChildProcess | null = null;
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // Check if STT server is already running
     if (sttProcess && !sttProcess.killed) {
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   return NextResponse.json({
     running: sttProcess && !sttProcess.killed,
     pid: sttProcess?.pid || null
