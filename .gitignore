@@ -39,3 +39,113 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ========================================
+# STT (Speech-to-Text) Exclusions
+# ========================================
+
+# Large Vosk model files (can be downloaded separately)
+stt/model/
+stt/vosk-model-*/
+
+# Generated audio files and test recordings
+stt/*.mp3
+stt/*.wav
+stt/*.webm
+stt/*.pcm
+
+# Python cache and temporary files
+stt/__pycache__/
+stt/*.pyc
+stt/*.pyo
+stt/.pytest_cache/
+
+# ========================================
+# TTS (Text-to-Speech) Exclusions  
+# ========================================
+
+# Python virtual environment
+tts-local/.venv/
+tts-local/venv/
+
+# Generated audio output files
+tts-local/*.wav
+tts-local/*.mp3
+
+# Piper model files and binaries (can be downloaded separately)
+tts-local/piper/*.onnx
+tts-local/piper/*.onnx.json
+tts-local/piper/*.dll
+tts-local/piper/*.exe
+tts-local/piper/*.ort
+tts-local/piper/espeak-ng-data/
+tts-local/piper/pkgconfig/
+tts-local/piper/*.wav
+
+# Python cache files
+tts-local/__pycache__/
+tts-local/**/__pycache__/
+tts-local/*.pyc
+tts-local/*.pyo
+
+# IDE and editor files
+tts-local/.vscode/
+.vscode/
+
+# ========================================
+# General Python Exclusions
+# ========================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/

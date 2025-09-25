@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Piper TTS Tester (Local)</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <div class="container">
+    <h2>Piper TTS Tester</h2>
+    <textarea id="text" rows="5" placeholder="Type text here...">Hello from Piper TTS running locally.</textarea>
+
+    <div class="controls">
+      <label>Speed:
+        <input id="lengthScale" type="range" min="0.6" max="1.4" step="0.05" value="1.0">
+        <span id="lsVal">1.0</span>
+      </label>
+      <label>Noise:
+        <input id="noiseScale" type="range" min="0.2" max="1.2" step="0.05" value="0.667">
+        <span id="nsVal">0.667</span>
+      </label>
+      <label>Noise W:
+        <input id="noiseW" type="range" min="0.2" max="1.2" step="0.05" value="0.8">
+        <span id="nwVal">0.8</span>
+      </label>
+    </div>
+
+    <button id="speak">Speak</button>
+    <audio id="player" controls></audio>
+    <p class="hint">This page POSTs to /tts and plays the returned WAV.</p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

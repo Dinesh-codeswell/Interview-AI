@@ -1,0 +1,69 @@
+## Error Type
+Console Error
+
+## Error Message
+The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
+
+Previous: [async ()=>{
+            try {
+                const response = await fetch("/api/interview/questions?company=".concat(encodeURIComponent(company), "&role=").concat(encodeURIComponent(role)));
+                const data = await response.json();
+                if (data.success) {
+                    setState({
+                        "useInterviewEngine.useCallback[loadQuestions]": (prev)=>({
+                                ...prev,
+                                questions: data.questions,
+                                interviewPhase: 'speaking'
+                            })
+                    }["useInterviewEngine.useCallback[loadQuestions]"]);
+                    // Start with the first question
+                    await speakQuestion(data.questions[0].text);
+                }
+            } catch (error) {
+                console.error('Failed to load questions:', error);
+            }
+        }, ()=>{
+            console.log('🛑 Stopping audio streaming...');
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+                mediaRecorderRef.current.stop();
+            }
+            // Don't stop the main media stream as it's managed by the parent component
+            // Just clear our reference
+            audioStreamRef.current = null;
+            mediaRecorderRef.current = null;
+            console.log('✅ Audio streaming stopped');
+        }]
+Incoming: []
+
+
+    at createConsoleError (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_b0daae9a._.js:1605:71)
+    at handleConsoleError (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_b0daae9a._.js:2203:54)
+    at error (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_b0daae9a._.js:2354:57)
+    at areHookInputsEqual (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:4075:56)
+    at updateEffectImpl (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:4770:50)
+    at useEffect (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:13587:29)
+    at exports.useEffect (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:1696:36)
+    at useInterviewEngine (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/src_49e083a0._.js?id=%255Bproject%255D%252Fsrc%252Fhooks%252FuseInterviewEngine.ts+%255Bapp-client%255D+%2528ecmascript%2529:488:180)
+    at LiveInterviewInterface (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/src_49e083a0._.js:1408:189)
+    at react_stack_bottom_frame (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:13072:24)
+    at renderWithHooksAgain (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:4146:24)
+    at renderWithHooks (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:4097:28)
+    at updateFunctionComponent (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:5523:21)
+    at beginWork (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:6111:24)
+    at runWithFiberInDEV (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:886:131)
+    at performUnitOfWork (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8298:97)
+    at workLoopSync (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8190:57)
+    at renderRootSync (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8173:13)
+    at performWorkOnRoot (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:7908:212)
+    at performSyncWorkOnRoot (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8890:26)
+    at flushSyncWorkAcrossRoots_impl (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8809:316)
+    at flushSyncWork$1 (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8048:86)
+    at scheduleRefresh (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:294:13)
+    at performReactRefresh/< (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:391:33)
+    at performReactRefresh (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:384:38)
+    at applyUpdate (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:878:31)
+    at scheduleUpdate/< (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_compiled_5150ccfd._.js:886:13)
+    at InterviewPage (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/src_49e083a0._.js:2411:221)
+    at ClientPageRoot (file://C:/Users/Acer/Desktop/Interview ai/interview-ace-pro/.next/static/chunks/node_modules_next_dist_8db7fb1f._.js:2645:50)
+
+Next.js version: 15.5.3 (Turbopack)

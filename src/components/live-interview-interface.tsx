@@ -9,6 +9,9 @@ import {
   VideoOff, 
   Clock
 } from "lucide-react";
+import { useInterviewEngine } from '@/hooks/useInterviewEngine';
+import { ChatInterface } from '@/components/ChatInterface';
+import { serverManager } from '@/lib/server-manager';
 
 // Interface for browser fullscreen APIs
 interface DocumentWithFullscreen extends Document {
@@ -28,8 +31,16 @@ interface LiveInterviewInterfaceProps {
   role: string;
 }
 
+interface Message {
+  id: string;
+  type: 'ai' | 'user';
+  content: string;
+  timestamp: Date;
+  isPartial?: boolean;
+}
+
 export default function LiveInterviewInterface({ company, role }: LiveInterviewInterfaceProps) {
-  // State variables
+  // Existing state variables
   const [interviewTimer, setInterviewTimer] = useState(0);
   const [isInterviewActive, setIsInterviewActive] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(false);
@@ -40,8 +51,64 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
   const [error, setError] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   
+  // New state for AI interview
+  const [messages, setMessages] = useState<Message[]>([]);
+  
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  // AI Interview Engine - always call the hook to avoid conditional hooks violation
+  const interviewEngine = useInterviewEngine({
+    company,
+    role,
+    mediaStream: stream, // Pass stream even if null, hook will handle it
+    onInterviewComplete: () => {
+      console.log('Interview completed!');
+      // Handle interview completion
+    }
+  });
+
+  // Extract values directly from the hook
+  const {
+    questions,
+    currentQuestion,
+    currentQuestionIndex,
+    isAISpeaking,
+    isUserSpeaking,
+    currentTranscription,
+    finalTranscription,
+    silenceTimer,
+    interviewPhase,
+    moveToNextQuestion,
+    resetSilenceTimer
+  } = interviewEngine;
+
+  // Update messages when AI speaks or user responds
+  useEffect(() => {
+    if (currentQuestion && !messages.find(m => m.content === currentQuestion.text)) {
+      setMessages(prev => [...prev, {
+        id: `ai-${currentQuestionIndex}`,
+        type: 'ai',
+        content: currentQuestion.text,
+        timestamp: new Date()
+      }]);
+    }
+  }, [currentQuestion, currentQuestionIndex, messages]);
+
+  useEffect(() => {
+    if (finalTranscription.trim()) {
+      setMessages(prev => {
+        // Remove any existing partial message for this response
+        const filtered = prev.filter(m => !(m.type === 'user' && m.isPartial));
+        return [...filtered, {
+          id: `user-${Date.now()}`,
+          type: 'user',
+          content: finalTranscription.trim(),
+          timestamp: new Date()
+        }];
+      });
+    }
+  }, [finalTranscription]);
 
   // Timer effect
   useEffect(() => {
@@ -206,190 +273,266 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
     }
   };
 
-  // Request media access with proper error handling
+  // Simple and stable media access function
+  // Request media access (camera and microphone)
   const requestMediaAccess = useCallback(async () => {
+    console.log('🎥 Requesting media access...');
+    setPermissionRequested(true);
+    setError(null);
+    setIsInitializing(true);
+    
     try {
-      console.log('🎥 Starting media access request...');
-      setPermissionRequested(true);
-      setError(null);
-      setIsVideoReady(false);
+      // Stop any existing stream first
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+        setStream(null);
+      }
+
+      let mediaStream: MediaStream;
       
-      // Clean up any existing streams first
-      cleanupStreams();
-      
-      // Wait longer for cleanup to complete
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      console.log('📋 Requesting user media with basic constraints...');
-      
-      // Start with very basic constraints to avoid allocation errors
-      const basicConstraints = {
-        video: {
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          frameRate: { ideal: 15, max: 30 }
-        },
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
+      // Try with optimized constraints first
+      try {
+        console.log('🎥 Attempting high-quality media access...');
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280, max: 1920, min: 640 },
+            height: { ideal: 720, max: 1080, min: 480 },
+            frameRate: { ideal: 30, max: 60, min: 15 },
+            facingMode: 'user'
+          },
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            sampleRate: { ideal: 48000 }
+          }
+        });
+        console.log('✅ High-quality media stream obtained');
+      } catch (constraintError) {
+        console.warn('⚠️ High quality constraints failed, trying basic settings:', constraintError);
+        
+        // Fallback to very basic constraints
+        try {
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user' },
+            audio: true
+          });
+          console.log('✅ Basic media stream obtained');
+        } catch (basicError) {
+          console.warn('⚠️ Basic constraints failed, trying minimal settings:', basicError);
+          
+          // Final fallback - absolute minimal constraints
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true
+          });
+          console.log('✅ Minimal media stream obtained');
         }
-      };
-      
-      const mediaStream = await navigator.mediaDevices.getUserMedia(basicConstraints);
-      console.log('✅ Media stream obtained successfully');
-      console.log('📊 Stream tracks:', mediaStream.getTracks().map(track => 
-        `${track.kind}: ${track.label} (${track.readyState})`
-      ));
-      
-      // Store stream in both state and ref
-      setStream(mediaStream);
+      }
+
+      // Validate stream
+      if (!mediaStream || !mediaStream.active) {
+        throw new Error('Media stream is not active');
+      }
+
+      const videoTracks = mediaStream.getVideoTracks();
+      const audioTracks = mediaStream.getAudioTracks();
+
+      if (videoTracks.length === 0) {
+        throw new Error('No video track available');
+      }
+
+      if (audioTracks.length === 0) {
+        throw new Error('No audio track available');
+      }
+
+      console.log('✅ Media stream validated:', {
+        video: videoTracks.length > 0,
+        audio: audioTracks.length > 0,
+        videoTrackState: videoTracks[0]?.readyState,
+        audioTrackState: audioTracks[0]?.readyState,
+        videoSettings: videoTracks[0]?.getSettings(),
+        audioSettings: audioTracks[0]?.getSettings()
+      });
+
+      // Store stream reference
       streamRef.current = mediaStream;
+      setStream(mediaStream);
       setIsCameraOn(true);
       setIsMicOn(true);
-      setIsInterviewActive(true);
+
+      // Set up video element with enhanced error handling
+      const video = videoRef.current;
+      if (!video) {
+        throw new Error('Video element not found');
+      }
+
+      console.log('📹 Setting up video element...');
       
-      // Set up video element
-      if (videoRef.current) {
-        console.log('🎬 Setting up video element...');
+      // Clear any existing src
+      video.srcObject = null;
+      video.src = '';
+      
+      // Set up comprehensive event handlers
+      const handleVideoReady = () => {
+        console.log('📹 Video is ready and playing');
+        setIsVideoReady(true);
+        setIsInitializing(false);
+        setError(null);
+      };
+
+      const handleVideoError = (event: Event) => {
+        console.error('📹 Video error:', event);
+        const videoElement = event.target as HTMLVideoElement;
+        if (videoElement && videoElement.error) {
+          console.error('Video error details:', videoElement.error);
+        }
+      };
+
+      video.onloadedmetadata = () => {
+        console.log('📹 Video metadata loaded');
+        video.play().catch(playError => {
+          console.warn('📹 Video play failed:', playError);
+          setError('Click anywhere to start video');
+        });
+      };
+      
+      video.onloadeddata = () => {
+        console.log('📹 Video data loaded');
+      };
+      
+      video.oncanplay = () => {
+        console.log('📹 Video can play');
+        handleVideoReady();
+      };
+      
+      video.onplaying = () => {
+        console.log('📹 Video is playing');
+        handleVideoReady();
+      };
+
+      video.onerror = handleVideoError;
+      
+      // Set the stream
+      video.srcObject = mediaStream;
+      
+      // Try to play the video with better error handling
+      try {
+        await video.play();
+        console.log('✅ Video playing successfully');
+        handleVideoReady();
+      } catch (playError) {
+        console.warn('⚠️ Video autoplay blocked or failed:', playError);
+        setError('Click anywhere to start video');
         
-        const video = videoRef.current;
-        
-        // Clear any existing src first
-        video.srcObject = null;
-        video.src = '';
-        
-        // Set up event handlers
-        const handleLoadedMetadata = () => {
-          console.log('📐 Video metadata loaded');
-          console.log(`📏 Video dimensions: ${video.videoWidth}x${video.videoHeight}`);
-          setIsVideoReady(true);
-        };
-        
-        const handleCanPlay = () => {
-          console.log('▶️ Video can start playing');
-          if (video) {
-            video.play().catch(e => {
-              console.warn('Autoplay failed, will try on user interaction:', e);
-            });
+        const startVideoOnClick = async () => {
+          try {
+            await video.play();
+            console.log('✅ Video started after user interaction');
+            handleVideoReady();
+            document.removeEventListener('click', startVideoOnClick);
+          } catch (clickPlayError) {
+            console.error('❌ Video play failed even after user interaction:', clickPlayError);
+            setError('Video playback failed. Please refresh and try again.');
           }
         };
         
-        const handlePlaying = () => {
-          console.log('✅ Video is playing');
+        document.addEventListener('click', startVideoOnClick, { once: true });
+      }
+
+      // Enter fullscreen mode for better interview experience
+      try {
+        await enterFullscreen();
+      } catch (fullscreenError) {
+        console.warn('⚠️ Fullscreen not supported or blocked:', fullscreenError);
+        // Continue without fullscreen
+      }
+      
+      // Safety timeout - ensure we don't stay in initializing state forever
+      setTimeout(() => {
+        if (mediaStream && mediaStream.active && video && video.srcObject === mediaStream) {
+          console.log('🔧 Safety timeout: Forcing video ready state');
           setIsVideoReady(true);
           setIsInitializing(false);
-          // Trigger fullscreen once video is playing
-          setTimeout(() => {
-            enterFullscreen();
-          }, 500);
-        };
-        
-        const handleError = (e: Event) => {
-          console.error('❌ Video element error:', e);
-          setError('Video playback failed');
-          setIsVideoReady(false);
-        };
-        
-        // Remove existing listeners first
-        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
-        video.removeEventListener('canplay', handleCanPlay);
-        video.removeEventListener('playing', handlePlaying);
-        video.removeEventListener('error', handleError);
-        
-        // Assign event handlers
-        video.addEventListener('loadedmetadata', handleLoadedMetadata);
-        video.addEventListener('canplay', handleCanPlay);
-        video.addEventListener('playing', handlePlaying);
-        video.addEventListener('error', handleError);
-        
-        // Configure video element
-        video.srcObject = mediaStream;
-        video.muted = true;
-        video.playsInline = true;
-        video.autoplay = true;
-        
-        console.log('🔗 Stream assigned to video element');
-        
-        // Force load and play
-        try {
-          console.log('▶️ Attempting to load and play video...');
-          await video.load();
-          await video.play();
-          console.log('✅ Video playback started successfully');
-        } catch (playError) {
-          console.error('❌ Video play failed:', playError);
           
-          // Retry after a delay
-          setTimeout(async () => {
-            try {
-              if (videoRef.current) {
-                await videoRef.current.play();
-                console.log('✅ Video started on retry');
-              }
-            } catch (retryError) {
-              console.warn('❌ Video retry failed:', retryError);
-            }
-          }, 1000);
-          
-          setError('Click anywhere to start video');
+          // If video is still paused, try to play it
+          if (video.paused) {
+            video.play().catch(timeoutPlayError => {
+              console.warn('🔧 Safety timeout play failed:', timeoutPlayError);
+              setError('Click anywhere to start video');
+            });
+          }
         }
-      } else {
-        console.error('❌ Video ref not available');
-        setError('Video element not ready');
-      }
+      }, 5000);
       
     } catch (error: unknown) {
       console.error('❌ Media access failed:', error);
       
-      // Handle specific error types
-      let errorMessage = 'Camera access failed';
+      let errorMessage = 'Camera and microphone access failed';
       
       if (error instanceof Error) {
-        if (error.name === 'NotReadableError') {
-          errorMessage = 'Camera is already in use by another application. Please close other apps using the camera and try again.';
-        } else if (error.name === 'NotAllowedError') {
-          errorMessage = 'Camera and microphone access denied. Please allow permissions and refresh the page.';
-        } else if (error.name === 'NotFoundError') {
-          errorMessage = 'No camera or microphone found. Please connect a camera and microphone.';
-        } else if (error.name === 'OverconstrainedError') {
-          errorMessage = 'Camera constraints not supported. Trying with minimal settings...';
-          
-          // Retry with minimal constraints
-          try {
-            console.log('🔄 Retrying with minimal constraints...');
-            const minimalStream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true
-          });
-          
-          setStream(minimalStream);
-          streamRef.current = minimalStream;
-          setIsCameraOn(true);
-          setIsMicOn(true);
-          setIsInterviewActive(true);
-          
-          if (videoRef.current) {
-            videoRef.current.srcObject = minimalStream;
-            await videoRef.current.play();
-            setIsVideoReady(true);
-            setIsInitializing(false);
-          }
-          
-          return; // Success with minimal constraints
-        } catch (retryError) {
-          console.error('❌ Retry with minimal constraints failed:', retryError);
-          errorMessage = 'Camera initialization failed even with minimal settings. Please check your camera.';
+        switch (error.name) {
+          case 'NotAllowedError':
+            errorMessage = 'Camera and microphone access denied. Please allow permissions and refresh the page.';
+            break;
+          case 'NotFoundError':
+            errorMessage = 'No camera or microphone found. Please connect your devices and refresh the page.';
+            break;
+          case 'NotReadableError':
+            errorMessage = 'Camera is busy or being used by another application. Please close other apps using the camera and refresh.';
+            break;
+          case 'OverconstrainedError':
+            errorMessage = 'Camera settings not supported by your device. Trying basic settings...';
+            
+            // Final attempt with absolute minimal constraints
+            try {
+              console.log('🔧 Final attempt with minimal constraints...');
+              const minimalStream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: true
+              });
+              
+              if (minimalStream && minimalStream.active) {
+                streamRef.current = minimalStream;
+                setStream(minimalStream);
+                setIsCameraOn(true);
+                setIsMicOn(true);
+                
+                const video = videoRef.current;
+                if (video) {
+                  video.srcObject = minimalStream;
+                  await video.play();
+                  setIsVideoReady(true);
+                  setIsInitializing(false);
+                  setError(null);
+                  console.log('✅ Minimal constraints worked');
+                  return;
+                }
+              }
+            } catch (minimalError) {
+              console.error('❌ Even minimal constraints failed:', minimalError);
+              errorMessage = `Camera initialization failed: ${minimalError instanceof Error ? minimalError.message : 'Unknown error'}`;
+            }
+            break;
+          case 'AbortError':
+            errorMessage = 'Camera access was interrupted. Please try again.';
+            break;
+          default:
+            errorMessage = `Camera error: ${error.message || 'Unknown error occurred'}`;
         }
+      } else {
+        errorMessage = 'An unexpected error occurred while accessing camera and microphone.';
       }
-    }
       
       setError(errorMessage);
       setPermissionRequested(false);
       setIsVideoReady(false);
       setIsInitializing(false);
+      setIsCameraOn(false);
+      setIsMicOn(false);
     }
-  }, [cleanupStreams, enterFullscreen]);
+  }, [enterFullscreen]);
 
   // Handle end interview
   const handleEndInterview = async () => {
@@ -431,6 +574,13 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
         audioTrack.enabled = !audioTrack.enabled;
         setIsMicOn(audioTrack.enabled);
         console.log(`🎤 Microphone ${audioTrack.enabled ? 'enabled' : 'disabled'}`);
+        
+        // Notify the interview engine about microphone state change
+        if (audioTrack.enabled) {
+          console.log('🎤 Microphone enabled - starting listening');
+        } else {
+          console.log('🎤 Microphone disabled - stopping listening');
+        }
       }
     }
   };
@@ -446,10 +596,46 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
     const initializeInterview = async () => {
       try {
         setIsInitializing(true);
+        
+        // First, start all required servers
+        console.log('🔧 Starting required servers...');
+        const serverResults = await serverManager.startAllServers();
+        
+        if (!serverResults.stt) {
+          console.warn('⚠️ STT Server failed to start, speech recognition may not work');
+        }
+        
+        if (!serverResults.tts) {
+          console.warn('⚠️ TTS Server failed to start, audio responses may not work');
+        }
+        
+        // Check if browser supports getUserMedia
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('Browser does not support camera/microphone access');
+        }
+        
+        // Check available devices first
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        const audioDevices = devices.filter(device => device.kind === 'audioinput');
+        
+        console.log('📱 Available devices:', {
+          video: videoDevices.length,
+          audio: audioDevices.length
+        });
+        
+        if (videoDevices.length === 0) {
+          throw new Error('No camera found. Please connect a camera and refresh the page.');
+        }
+        
+        if (audioDevices.length === 0) {
+          throw new Error('No microphone found. Please connect a microphone and refresh the page.');
+        }
+        
         await requestMediaAccess();
       } catch (error) {
         console.error('❌ Failed to initialize interview:', error);
-        setError('Failed to initialize interview');
+        setError(error instanceof Error ? error.message : 'Failed to initialize interview');
         setIsInitializing(false);
       }
     };
@@ -463,7 +649,7 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
       clearTimeout(timeoutId);
       cleanupStreams();
     };
-  }, [requestMediaAccess, cleanupStreams]); // Add missing dependencies
+  }, []); // Empty dependency array - only run once on mount
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
@@ -507,18 +693,28 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
       {/* Main Content - Full Screen Camera */}
       <div className="flex-1 relative h-screen">
         <div className="absolute inset-0 bg-black">
-          {stream && videoRef.current && isVideoReady && !isInitializing ? (
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              className="w-full h-full object-cover"
-              style={{ transform: 'scaleX(-1)' }} // Mirror effect
-              onLoadedData={() => console.log('Video data loaded and ready')}
-              onError={(e) => console.error('Video error:', e)}
-            />
-          ) : (
+          {/* Video Element - Always rendered for immediate access */}
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+            style={{ 
+              transform: 'scaleX(-1)', // Mirror effect
+              opacity: stream ? 1 : 0, // Use opacity instead of display
+              pointerEvents: stream ? 'auto' : 'none'
+            }}
+            onLoadedData={() => {
+              console.log('Video data loaded and ready');
+              setIsVideoReady(true);
+              setIsInitializing(false);
+            }}
+            onError={(e) => console.error('Video error:', e)}
+          />
+          
+          {/* Fallback UI when no stream */}
+          {!stream && (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
               <div className="text-center text-white">
                 <Video className="w-24 h-24 text-gray-400 mx-auto mb-6" />
@@ -556,9 +752,23 @@ export default function LiveInterviewInterface({ company, role }: LiveInterviewI
             </div>
           )}
           
+          {/* Chat Interface - Bottom Left with proper spacing */}
+          {stream && (
+            <div className="absolute bottom-24 left-8 w-96 max-h-80 z-10">
+              <ChatInterface
+                messages={messages}
+                currentTranscription={currentTranscription}
+                isAISpeaking={isAISpeaking}
+                isUserSpeaking={isUserSpeaking}
+                silenceTimer={silenceTimer}
+                interviewPhase={interviewPhase}
+              />
+            </div>
+          )}
+
           {/* Camera Controls - Bottom Center with Blur Background */}
-          {(stream && isVideoReady) && (
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+          {stream && (
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
               <div className="flex items-center space-x-6 bg-black/20 backdrop-blur-md px-8 py-4 rounded-full border border-white/10">
                 <Button
                   onClick={toggleMicrophone}

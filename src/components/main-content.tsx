@@ -128,10 +128,10 @@ export default function MainContent({ searchTerm, setSearchTerm, clearSearch }: 
         return difficultyOrderDesc[a.difficulty as keyof typeof difficultyOrderDesc] - difficultyOrderDesc[b.difficulty as keyof typeof difficultyOrderDesc];
       case "reviews":
         // Simulate review sorting (in real app, this would be based on actual review data)
-        return Math.random() - 0.5;
+        return a.id - b.id; // Use stable sorting based on ID
       case "top-rated":
         // Simulate top-rated sorting (in real app, this would be based on actual rating data)
-        return Math.random() - 0.5;
+        return b.id - a.id; // Use stable sorting based on ID (reverse order)
       default:
         return 0;
     }
@@ -388,7 +388,7 @@ export default function MainContent({ searchTerm, setSearchTerm, clearSearch }: 
                         </div>
                         <div className="flex items-center">
                           <Users className="w-2 h-2 mr-1" />
-                          {Math.floor(Math.random() * 500) + 100}+
+                          305+
                         </div>
                       </div>
                       <div className="flex items-center space-x-0.5">
@@ -396,7 +396,7 @@ export default function MainContent({ searchTerm, setSearchTerm, clearSearch }: 
                           <div
                             key={i}
                             className={`w-0.5 h-2 rounded-full transition-all duration-300 ${
-                              i < Math.floor(Math.random() * 5) + 1
+                              i < 4
                                 ? 'bg-gradient-to-t from-primary to-purple-500'
                                 : 'bg-gray-200'
                             }`}
